@@ -384,28 +384,25 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Or make a thin customization layer and use 'select' to provide overrides -->
 <!-- See more generally applicable parameters in mathbook-common.xsl file     -->
 
-<!-- WeBWorK exercise may be rendered static="yes"    -->
-<!-- TODO: implement middle option static="preview"   -->
-<!-- Or static="no" makes an interactive problem      -->
-<!-- Also in play here are params from -common:       -->
-<!-- exercise.text.statement, exercise.text.hint, exercise.text.solution -->
-<!-- For a divisional exercise, when static="no", that is an intentional -->
-<!-- decision to show the live problem, which means the statement will   -->
-<!-- be shown, regardless of exercise.text.statement. If the problem was -->
-<!-- authored in PTX source, we can respect the values for               -->
-<!-- exercise.text.hint and exercise.text.solution. If the problem       -->
-<!-- source is on the webwork server, then hints and solutions will show -->
-<!-- no matter what.                                                     -->
-<!-- For a divisional exercise, when static="yes", each of the three     -->
-<!-- -common params will be respected. Effectively the content is        -->
-<!-- handled like a non-webwork exercise.                                -->
-<!-- For an inline exercise (webwork or otherwise) statements, hints,    -->
-<!-- and solutions are always shown. The -common params mentioned above  -->
-<!-- do not apply. Whether static is "yes" or "no" doesn't matter.       -->
+<!-- WeBWorK exercise may be rendered static="yes" or static="no".       -->
+<!-- For static="yes", it's all handled just like non-webwork exercises. -->
+<!-- For static="no", there will be a static preview of the statement    -->
+<!-- (and only the statement). Clicking a button will replace the static -->
+<!-- with a live version. This live version will show the statement, and -->
+<!-- may or may not give access to hints and solutions, depending on:    -->
+<!-- 1. A problem with source in the host course (as opposed to authored -->
+<!-- in PTX) will show its hints and solutions according to whether or   -->
+<!-- not they exist. We can't control that.                              -->
+<!-- 2. Otherwise, the parameters form -commmon, exercise....hint and    -->
+<!-- exercise....solution shold be respected.                            -->
 <xsl:param name="webwork.inline.static" select="'no'" />
 <xsl:param name="webwork.divisional.static" select="'yes'" />
 <xsl:param name="webwork.reading.static" select="'yes'" />
 <xsl:param name="webwork.worksheet.static" select="'yes'" />
+<xsl:variable name="b-webwork-inline-static" select="$webwork.inline.static = 'yes'" />
+<xsl:variable name="b-webwork-divisional-static" select="$webwork.divisional.static = 'yes'" />
+<xsl:variable name="b-webwork-reading-static" select="$webwork.reading.static = 'yes'" />
+<xsl:variable name="b-webwork-worksheet-static" select="$webwork.worksheet.static = 'yes'" />
 
 <!-- Content as Knowls -->
 <!-- These parameters control if content is      -->
@@ -548,17 +545,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:variable>
 
-<xsl:variable name="webwork-server">
-    <xsl:choose>
-        <xsl:when test="$document-root//webwork-reps/server-url">
-            <xsl:value-of select="substring-before($document-root//webwork-reps/server-url[1], '/webwork2')" />
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:text>https://webwork-ptx.aimath.org</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:variable>
-
 <!-- Local versions of navigation options -->
 <!-- Fatal errors if not recognized       -->
 <xsl:variable name="nav-logic">
@@ -669,6 +655,32 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Here we assume there is at most one                      -->
 <!-- (The old style of specifying an index is deprecated)     -->
 <xsl:variable name="the-index"          select="($document-root//index-part|$document-root//index[index-list])[1]"/>
+
+<!-- ######################### -->
+<!-- WeBWorK hosting variables -->
+<!-- ######################### -->
+
+<xsl:variable name="html.webwork.server">
+    <xsl:text>https://webwork-dev.aimath.org/</xsl:text>
+    <!-- <xsl:value-of select="$publication/html/webwork/@server"/> -->
+</xsl:variable>
+<xsl:variable name="html.webwork.courseID">
+    <xsl:text>anonymous</xsl:text>
+    <!-- <xsl:value-of select="$publication/html/webwork/@courseID"/> -->
+</xsl:variable>
+<xsl:variable name="html.webwork.userID">
+    <xsl:text>anonymous</xsl:text>
+    <!-- <xsl:value-of select="$publication/html/webwork/@userID"/> -->
+</xsl:variable>
+<xsl:variable name="html.webwork.course-password">
+    <xsl:text>anonymous</xsl:text>
+    <!-- <xsl:value-of select="$publication/html/webwork/@course-password"/> -->
+</xsl:variable>
+<xsl:variable name="html.webwork.password">
+    <xsl:text>anonymous</xsl:text>
+    <!-- <xsl:value-of select="$publication/html/webwork/@password"/> -->
+</xsl:variable>
+
 
 
 <!-- ############## -->
@@ -8885,151 +8897,473 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- ########################## -->
 
 <!-- WeBWorK HTML CSS header -->
-<!-- MathView is a math entry palette tool that could be enabled  -->
-<!-- in the host anonymous course.   It is incorporated only if   -->
-<!-- "webwork-reps" element is present                            -->
 <!-- TODO: should also depend on whether all are presented as static -->
-<xsl:template name="webwork">
+<!-- TODO: allow HTML build to override with a different server, host course, etc. -->
+<!-- For now, just look to first webwork-reps -->
+<xsl:template name="webwork-header">
     <xsl:if test="$b-has-webwork-reps">
-        <link href="{$webwork-server}/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
-        <script src="{$webwork-server}/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.min.js"></script>
+        <script>
+            <xsl:text>var ww_server = '</xsl:text><xsl:value-of select="$html.webwork.server"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_courseID = '</xsl:text><xsl:value-of select="$html.webwork.courseID"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_userID = '</xsl:text><xsl:value-of select="$html.webwork.userID"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_course_password = '</xsl:text><xsl:value-of select="$html.webwork.course-password"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_password = '</xsl:text><xsl:value-of select="$html.webwork.password"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>class WebworkProblem {
+              constructor(fields) {
+                this.prefix = fields.id; delete fields.id;
+                this.container = document.getElementById(this.prefix);
+                this.form = this.container.appendChild(document.createElement('form'));
+                this.fields = Object.assign({}, WebworkProblem.initialFields, fields);
+                this.div = document.createElement('div');
+                this.submit();
+                }
+              submit(event) {
+                if (event) event.preventDefault();
+                const params = new URLSearchParams(new FormData(this.form));
+                if (this.submitter &amp;&amp; !params.has(this.submitter)) params.append(this.submitter, '1');
+                Object.entries(this.fields).forEach(([id, value]) => {if (!params.has(id)) {params.append(id, value)}});
+                const url = WebworkProblem.data.server + 'webwork2/html2xml?' + params;
+                const xhr = new XMLHttpRequest();
+                xhr.addEventListener('load', () => this.update(xhr.response));
+                xhr.addEventListener('error', () => console.log('WebworkProblem failed to load'));
+                xhr.addEventListener('cancel', () => console.log('WebworkProblem canceled'));
+                xhr.open('GET', url);
+                xhr.send();
+              }
+              update(json) {
+                const data = JSON.parse(json);
+                const body = Object.entries(data)
+                                   .filter(([id, value]) => id.substr(0, 9) === 'body_part')
+                                   .map(([id, value]) => value)
+                                   .join('')
+                                   .replace(/^&lt;body>\n/, '')
+                                   .replace(/\n&lt;\/body>\n&lt;\/html>\n$/, '');
+                if (data['head_part300']) {
+                  const script = data['head_part300'].replace(/&lt;\/?script.*?>/g, '')
+                                                     .replace(/&lt;\!--/, '').replace(/-->/, '');
+                  window.eval(script);
+                }
+                this.container.innerHTML = body;
+                this.form = this.container.getElementsByTagName('form')[0];
+                this.adjustIDs(this.form);
+                this.adjustSrcHrefs(this.form);
+                this.adjustKnowls();
+                this.fixFormAction();
+                Object.entries(data)
+                  .filter(([id, value]) => id.substr(0, 19) === 'hidden_input_field_' &amp;&amp; value !== '')
+                  .map(([id, value]) => this.fields[id.substr(19)] = value);
+                this.fields.answersSubmitted = 1;
+                MathJax.Hub.Typeset(this.prefix);
+              }
+              fixFormAction() {
+                this.form.onsubmit = this.submit.bind(this);
+                this.form.querySelectorAll('input[type="submit"]').forEach((node) => {
+                  node.onclick = (event) => {this.submitter = event.target.name};
+                });
+              }
+              adjustIDs(container) {
+                container.querySelectorAll('[id]').forEach((node) => {node.id = this.prefix + '-' + node.id});
+              }
+              adjustKnowls() {
+                this.form.querySelectorAll('a[knowl][value][base64]').forEach((node) => {
+                  this.div.innerHTML = atob(node.attributes.value.value);
+                  this.adjustIDs(this.div);
+                  this.adjustSrcHrefs(this.div);
+                  node.setAttribute('value', btoa(this.div.innerHTML));
+                });
+              }
+              adjustSrcHrefs(container) {
+                const server = WebworkProblem.data.server;
+                container.querySelectorAll('[href]').forEach((node) => {
+                  const href = node.attributes.href.value;
+                  if (href !== '#' &amp;&amp; !href.match(/^[a-z]+:\/\//i)) node.href = server + href;
+                });
+                container.querySelectorAll('[src]').forEach((node) => {
+                  node.src = server + node.attributes.src.value;
+                });
+              }
+            }
+            WebworkProblem.init = function (data) {
+              this.data = data;
+              const fields = this.initialFields = {
+                courseID: 'anonymous',
+                userID: 'anonymous',
+                course_password: 'anonymous',
+                problemSeed: 1234,
+                displayMode: 'MathJax',
+                outputformat: 'json',
+                answersSubmitted: 0
+              };
+              Object.keys(data).forEach((id) => {if (fields.hasOwnProperty(id)) fields[id] = data[id]});
+            };</xsl:text>
+        </script>
+        <script>
+            WebworkProblem.init({
+              server: ww_server,
+              courseID: ww_courseID,
+              userID: ww_userID,
+              'course_password': ww_course_password,
+              password: ww_password
+            });
+        </script>
+
+
+
+            <!-- <xsl:text>
+                function loadWWproblem(args) {</xsl:text>
+                    <xsl:text>const fields = {</xsl:text>
+                        <xsl:text>problemSeed: args.seed, </xsl:text>
+                        <xsl:text>courseID: ww_courseID, </xsl:text>
+                        <xsl:text>userID: ww_userID, </xsl:text>
+                        <xsl:text>course_password: ww_course_password, </xsl:text>
+                        <xsl:text>password: ww_password, </xsl:text>
+                        <xsl:text>displayMode: 'MathJax', </xsl:text>
+                        <xsl:text>outputformat: 'json', </xsl:text>
+                    <xsl:text>};</xsl:text>
+                    <xsl:text>let source_selector = (args.problemSource ? 'problemSource' : 'sourceFilePath');</xsl:text>
+                    <xsl:text>let source_value = (args.problemSource ? args.problemSource : args.sourceFilePath);</xsl:text>
+                    <xsl:text>let ww_id = args.id;</xsl:text>
+                    <xsl:text>const params = new URLSearchParams();
+                    Object.entries(fields).forEach(([id, value]) => params.append(id, value));
+                    params.append('answersSubmitted', 0);
+                    params.append(source_selector, source_value);
+                    const url = ww_server + 'webwork2/html2xml?' + params;
+                    const xhr = new XMLHttpRequest(); -->
+<!--                     xhr.addEventListener('load', function () {updateWW(this.response)});
+ -->                    <!-- xhr.open('GET', url);
+                    xhr.send();
+                }
+            </xsl:text>
+
+            <xsl:text>
+            class WebworkProblem {
+
+            constructor(prefix, fields) {
+              this.prefix = prefix;
+              this.container = document.getElementById(prefix);
+              this.form = this.container.getElementsByTagName('form')[0];
+              this.fields = Object.assign({}, WebworkProblem.initialFields, fields);
+              this.adjustIDs();
+              this.fixFormAction();
+            }
+
+            submit(event) {
+              event.preventDefault();
+              const params = new URLSearchParams(new FormData(this.form));
+              Object.entries(this.fields).forEach(([id, value]) => {if (!params.has(id)) {params.append(id, value)}});
+              const url = '</xsl:text><xsl:value-of select="$html.webwork.server"/><xsl:text>' + 'webwork2/html2xml?' + params;
+              const xhr = new XMLHttpRequest();
+              xhr.addEventListener('load', () => this.update(xhr.response));
+              xhr.addEventListener('error', () => console.log('WebworkProblem failed to load'));
+              xhr.addEventListener('cancel', () => console.log('WebworkProblem canceled'));
+              xhr.open('GET', url);
+              xhr.send();
+            }
+
+            update(json) {
+              const data = JSON.parse(json);
+              const body = Object.entries(data)
+                                 .filter(([id, value]) => id.substr(0, 9) === 'body_part')
+                                 .map(([id, value]) => value)
+                                 .join('')
+                                 .replace(/^&lt;body>\n/, '')
+                                 .replace(/\n&lt;\/body>\n&lt;\/html>\n$/, '');
+              this.container.innerHTML = body;
+              this.form = this.container.getElementsByTagName('form')[0];
+              this.adjustIDs();
+              this.fixFormAction();
+              Object.entries(data)
+                .filter(([id, value]) => id.substr(0, 19) === 'hidden_input_field_' &amp;&amp; value !== '')
+                .map(([id, value]) => this.fields[id.substr(19)] = value);
+            }
+
+              adjustIDs() {
+                this.form.querySelectorAll('[id]').forEach((node) => {node.id = this.prefix + node.id});
+              }
+            
+              fixFormAction() {
+                this.form.onsubmit = this.submit.bind(this);
+              }
+            }
+            WebworkProblem.initialFields = {
+              courseID: '</xsl:text><xsl:value-of select="$html.webwork.courseID"/><xsl:text>',
+              userID: '</xsl:text><xsl:value-of select="$html.webwork.userID"/><xsl:text>',
+              course_password: '</xsl:text><xsl:value-of select="$html.webwork.course-password"/><xsl:text>',
+              problemSeed: 1234,
+              displayMode: 'MathJax',
+              outputformat: 'json',
+              answersSubmitted: 1
+            } 
+            </xsl:text>
+        </script> -->
+
+
+            <!-- <xsl:text>var ww_server = '</xsl:text><xsl:value-of select="$html.webwork.server"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_courseID = '</xsl:text><xsl:value-of select="$html.webwork.courseID"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_userID = '</xsl:text><xsl:value-of select="$html.webwork.userID"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_course_password = '</xsl:text><xsl:value-of select="$html.webwork.course-password"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>var ww_password = '</xsl:text><xsl:value-of select="$html.webwork.password"/><xsl:text>';&#xa;</xsl:text>
+            <xsl:text>function insertWWproblem(args) {const fields = {</xsl:text>
+                <xsl:text>problemSeed: args.seed, </xsl:text>
+                <xsl:text>courseID: ww_courseID, </xsl:text>
+                <xsl:text>userID: ww_userID, </xsl:text>
+                <xsl:text>course_password: ww_course_password, </xsl:text>
+                <xsl:text>password: ww_password, </xsl:text>
+                <xsl:text>displayMode: 'MathJax', </xsl:text>
+                <xsl:text>outputformat: 'json', </xsl:text>
+            <xsl:text>};</xsl:text>
+            <xsl:text>let source_selector = (args.problemSource ? 'problemSource' : 'sourceFilePath');</xsl:text>
+            <xsl:text>let source_value = (args.problemSource ? args.problemSource : args.sourceFilePath);</xsl:text>
+            <xsl:text>let ww_id = args.id;</xsl:text>
+            <xsl:text>
+                function loadWWproblem() {
+                    const params = new URLSearchParams();
+                    Object.entries(fields).forEach(([id, value]) => params.append(id, value));
+                    params.append('answersSubmitted', 0);
+                    params.append(source_selector, source_value);
+                    const url = ww_server + 'webwork2/html2xml?' + params;
+                    const xhr = new XMLHttpRequest();
+                    xhr.addEventListener('load', function () {updateWW(this.response)});
+                    xhr.open('GET', url);
+                    xhr.send();
+                }
+                function handleSubmit(event) {
+                    let form = document.getElementById(ww_id + '-problemMainForm');
+                    const params = new URLSearchParams(new FormData(form));
+                    Object.entries(fields).forEach(([id, value]) => params.append(id, value));
+                    params.append('answersSubmitted', 1);
+                    params.append(source_selector, source_value);
+                    if (this.name == 'preview') {params.append('preview',1)}
+                    else if (this.name == 'WWsubmit') {params.append('WWsubmit',1)}
+                    else if (this.name == 'WWcorrectAns') {params.append('WWcorrectAns',1)};
+                    const url = ww_server + 'webwork2/html2xml?' + params;
+                    const xhr = new XMLHttpRequest();
+                    xhr.addEventListener('load', function () {updateWW(this.response)});
+                    xhr.open('GET', url);
+                    xhr.send();
+                    event.preventDefault();
+                }
+                function updateWW(json) {
+                    const data = JSON.parse(json);
+                    const body = Object.entries(data)
+                        .filter(([id, value]) => id.substr(0, 9) === 'body_part')
+                        .map(([id, value]) => value)
+                        .join('')
+                        .replace(/^&lt;body>\n/, '')
+                        .replace(/\n&lt;\/body>\n&lt;\/html>\n$/, '');
+                    document.getElementById(ww_id).innerHTML = body;
+
+                    // prepend ww_id to all id~s within the div
+                    adjustIDs(ww_id + '-');
+                    // redirect src and hrefs within the div
+                    adjustSrcHrefs(ww_server)
+                    // edit hint and solution knowls to follow PTX knowl js
+                    var hintxpath = "//a[b='Hint']";
+                    var hintanchor = document.evaluate(hintxpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    if (hintanchor) {
+                        var hintbase64 = hintanchor.attributes.value.value;
+                        var hint = atob(hintbase64);
+                        hintanchor.setAttribute('class', 'id-ref');
+                        hintanchor.setAttribute('data-knowl', '');
+                        hintanchor.setAttribute('data-refid', 'hk-hint-' + ww_id);
+                        hintlabel = document.createElement('span');
+                        hintlabel.setAttribute('class', 'type');
+                        hintanchor.innerHTML = "";
+                        hintanchor.appendChild(hintlabel);
+                        hintlabel.innerHTML = 'Hint';
+                        var hkhintdiv = document.createElement('div');
+                        hkhintdiv.setAttribute('class', 'hidden-content tex2jax_ignore');
+                        hkhintdiv.setAttribute('id', 'hk-hint-' + ww_id);
+                        var hintdivdiv = document.createElement('div');
+                        hintdivdiv.setAttribute('class', 'hint solution-like');
+                        hkhintdiv.appendChild(hintdivdiv);
+                        hintdivdiv.innerHTML = hint;
+                        hintdivdiv.querySelectorAll('[href]').forEach((node) => {if (node.attributes.href.value !== '#') {node.href = ww_server + node.attributes.href.value}});
+                        hintdivdiv.querySelectorAll('[src]').forEach((node) => {node.src = ww_server + node.attributes.src.value});
+                    }
+                    var solutionxpath = "//a[b='Solution']";
+                    var solutionanchor = document.evaluate(solutionxpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    if (solutionanchor) {
+                        var solutionbase64 = solutionanchor.attributes.value.value;
+                        var solution = atob(solutionbase64);
+                        solutionanchor.setAttribute('class', 'id-ref');
+                        solutionanchor.setAttribute('data-knowl', '');
+                        solutionanchor.setAttribute('data-refid', 'hk-solution-' + ww_id);
+                        solutionlabel = document.createElement('span');
+                        solutionlabel.setAttribute('class', 'type');
+                        solutionanchor.innerHTML = "";
+                        solutionanchor.appendChild(solutionlabel);
+                        solutionlabel.innerHTML = 'Solution';
+                        var hksolutiondiv = document.createElement('div');
+                        hksolutiondiv.setAttribute('class', 'hidden-content tex2jax_ignore');
+                        hksolutiondiv.setAttribute('id', 'hk-solution-' + ww_id);
+                        var solutiondivdiv = document.createElement('div');
+                        solutiondivdiv.setAttribute('class', 'solution solution-like');
+                        hksolutiondiv.appendChild(solutiondivdiv);
+                        solutiondivdiv.innerHTML = solution;
+                        solutiondivdiv.querySelectorAll('[href]').forEach((node) => {if (node.attributes.href.value !== '#') {node.href = ww_server + node.attributes.href.value}});
+                        solutiondivdiv.querySelectorAll('[src]').forEach((node) => {node.src = ww_server + node.attributes.src.value});
+                    }
+                    if (hintanchor || solutionanchor) {
+                        var solutionlikewrapper = document.createElement('div');
+                        solutionlikewrapper.setAttribute('class', 'webwork solutions');
+                        if (hintanchor) {
+                            hintanchor.parentNode.insertBefore(solutionlikewrapper, hintanchor);
+                            solutionlikewrapper.appendChild(hintanchor);
+                            hintanchor.parentNode.insertBefore(hkhintdiv, hintanchor.nextSibling);
+                            if (solutionanchor) {
+                                hintanchor.parentNode.insertBefore(solutionanchor, hintanchor.nextSibling);
+                                hkhintdiv.parentNode.insertBefore(hksolutiondiv, hkhintdiv.nextSibling);
+                            }
+                        }
+                        else {
+                            solutionanchor.parentNode.insertBefore(solutionlikewrapper, solutionanchor);
+                            solutionlikewrapper.appendChild(solutionanchor);
+                            solutionanchor.parentNode.insertBefore(hksolutiondiv, solutionanchor.nextSibling);
+                        }
+                    }
+
+                    let myform = document.getElementById(ww_id + '-problemMainForm');
+                    for (let button of myform.querySelectorAll('[type="submit"]')) {
+                        button.onclick = handleSubmit
+                    }
+                    var problem = document.getElementById(ww_id);
+                    MathJax.Hub.Typeset(problem)  
+                }
+                function adjustIDs(prefix) {
+                    const form = document.getElementById(ww_id);
+                    form.querySelectorAll('[id]').forEach((node) => {node.id = prefix + node.id});
+                    form.onsubmit = handleSubmit;
+                }
+                function adjustSrcHrefs(prefix) {
+                    const form = document.getElementById(ww_id);
+                    form.querySelectorAll('[href]').forEach((node) => {if (node.attributes.href.value !== '#') {node.href = prefix + node.attributes.href.value}});
+                    form.querySelectorAll('[src]').forEach((node) => {node.src = prefix + node.attributes.src.value});
+                    form.onsubmit = handleSubmit;
+                }
+                loadWWproblem();};
+            </xsl:text>
+        </script> -->
     </xsl:if>
 </xsl:template>
 
 <!-- Fail if WeBWorK extraction and merging has not been done -->
 <xsl:template match="webwork[node()|@*]">
-    <xsl:message>PTX:ERROR: A document that uses WeBWorK must have the mbx script webwork extraction run, followed by a merge using pretext-merge.xsl.  Apply subsequent style sheets to the merged output.  Your WeBWorK problems will be absent from your HTML output.</xsl:message>
+    <xsl:message>PTX:ERROR: Your WeBWorK problems will be absent from your HTML output. A document that uses WeBWorK must have the mbx script webwork extraction run, followed by a merge using pretext-merge.xsl.  Apply subsequent style sheets to the merged output.</xsl:message>
 </xsl:template>
 
 <!-- The guts of a WeBWorK problem realized in HTML -->
 <!-- This is heart of an external knowl version, or -->
 <!-- what is born visible under control of a switch -->
-<xsl:template match="webwork-reps[ancestor::exercises]">
+<xsl:template match="webwork-reps">
     <xsl:param name="b-original" select="true()"/>
+    <xsl:variable name="b-static" select="(ancestor::exercises and $b-webwork-divisional-static)
+                                       or (ancestor::reading-questions and $b-webwork-reading-static)
+                                       or (ancestor::worksheet and $b-webwork-worksheet-static)
+                                       or (not(ancestor::exercises or ancestor::reading-questions or ancestor::worksheet) and $b-webwork-inline-static)"/>
+    <xsl:variable name="b-has-hint" select="(ancestor::exercises and $b-has-divisional-hint)
+                                         or (ancestor::reading-questions and $b-has-reading-hint)
+                                         or (ancestor::worksheet and $b-has-worksheet-hint)
+                                         or (not(ancestor::exercises or ancestor::reading-questions or ancestor::worksheet) and $b-has-inline-hint)"/>
+    <xsl:variable name="b-has-answer" select="(ancestor::exercises and $b-has-divisional-answer)
+                                           or (ancestor::reading-questions and $b-has-reading-answer)
+                                           or (ancestor::worksheet and $b-has-worksheet-answer)
+                                           or (not(ancestor::exercises or ancestor::reading-questions or ancestor::worksheet) and $b-has-inline-answer)"/>
+    <xsl:variable name="b-has-solution" select="(ancestor::exercises and $b-has-divisional-solution)
+                                             or (ancestor::reading-questions and $b-has-reading-solution)
+                                             or (ancestor::worksheet and $b-has-worksheet-solution)
+                                             or (not(ancestor::exercises or ancestor::reading-questions or ancestor::worksheet) and $b-has-inline-solution)"/>
     <xsl:choose>
-        <xsl:when test="$webwork.divisional.static = 'yes'">
+        <xsl:when test="$b-static">
             <!-- static, usual HTML treatment -->
             <xsl:apply-templates select="static" mode="exercise-components">
                 <xsl:with-param name="b-original" select="$b-original"/>
                 <xsl:with-param name="b-has-statement" select="true()"/>
-                <xsl:with-param name="b-has-hint"      select="$b-has-divisional-hint"/>
-                <xsl:with-param name="b-has-answer"    select="$b-has-divisional-answer"/>
-                <xsl:with-param name="b-has-solution"  select="$b-has-divisional-solution"/>
+                <xsl:with-param name="b-has-hint"      select="$b-has-hint"/>
+                <xsl:with-param name="b-has-answer"    select="$b-has-answer"/>
+                <xsl:with-param name="b-has-solution"  select="$b-has-solution"/>
             </xsl:apply-templates>
         </xsl:when>
         <xsl:otherwise>
-            <!-- dynamic, iframe -->
-            <xsl:apply-templates select="." mode="webwork-iframe">
-                <xsl:with-param name="b-has-hint"     select="$b-has-divisional-hint"/>
-                <xsl:with-param name="b-has-solution" select="$b-has-divisional-solution"/>
-            </xsl:apply-templates>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="webwork-reps[ancestor::reading-questions]">
-    <xsl:param name="b-original" select="true()"/>
-    <xsl:choose>
-        <xsl:when test="$webwork.reading.static = 'yes'">
-            <!-- static, usual HTML treatment -->
-            <xsl:apply-templates select="static" mode="exercise-components">
+            <!-- dynamic -->
+            <!-- Make a div with static preview content and attributes needed for script insertion -->
+            <xsl:apply-templates select="." mode="webwork-json">
                 <xsl:with-param name="b-original" select="$b-original"/>
-                <xsl:with-param name="b-has-statement" select="true()"/>
-                <xsl:with-param name="b-has-hint"      select="$b-has-reading-hint"/>
-                <xsl:with-param name="b-has-answer"    select="$b-has-reading-answer"/>
-                <xsl:with-param name="b-has-solution"  select="$b-has-reading-solution"/>
-            </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-            <!-- dynamic, iframe -->
-            <xsl:apply-templates select="." mode="webwork-iframe">
-                <xsl:with-param name="b-has-hint"     select="$b-has-reading-hint"/>
-                <xsl:with-param name="b-has-solution" select="$b-has-reading-solution"/>
-            </xsl:apply-templates>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="webwork-reps[ancestor::worksheet]">
-    <xsl:param name="b-original" select="true()"/>
-    <xsl:choose>
-        <xsl:when test="$webwork.worksheet.static = 'yes'">
-            <!-- static, usual HTML treatment -->
-            <xsl:apply-templates select="static" mode="exercise-components">
-                <xsl:with-param name="b-original" select="$b-original"/>
-                <xsl:with-param name="b-has-statement" select="true()"/>
-                <xsl:with-param name="b-has-hint"      select="$b-has-worksheet-hint"/>
-                <xsl:with-param name="b-has-answer"    select="$b-has-worksheet-answer"/>
-                <xsl:with-param name="b-has-solution"  select="$b-has-worksheet-solution"/>
-            </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-            <!-- dynamic, iframe -->
-            <xsl:apply-templates select="." mode="webwork-iframe">
-                <xsl:with-param name="b-has-hint"     select="$b-has-worksheet-hint"/>
-                <xsl:with-param name="b-has-solution" select="$b-has-worksheet-solution"/>
-            </xsl:apply-templates>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<!-- NB: Context is not "exercise", so do not -->
-<!-- use "boolean(&INLINE-EXERCISE-FILTER;)"  -->
-<!-- Maybe when webwork-reps is removed?      -->
-<xsl:template match="webwork-reps[not(ancestor::exercises or ancestor::reading-questions or ancestor::worksheet)]">
-    <xsl:param name="b-original" select="true()"/>
-    <xsl:choose>
-        <xsl:when test="$webwork.inline.static = 'yes'">
-            <!-- static, usual HTML treatment -->
-            <xsl:apply-templates select="static" mode="exercise-components">
-                <xsl:with-param name="b-original" select="$b-original"/>
-                <xsl:with-param name="b-has-statement" select="true()"/>
-                <xsl:with-param name="b-has-hint"      select="$b-has-inline-hint"/>
-                <xsl:with-param name="b-has-answer"    select="$b-has-inline-answer"/>
-                <xsl:with-param name="b-has-solution"  select="$b-has-inline-solution"/>
-            </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-            <!-- dynamic, iframe -->
-            <xsl:apply-templates select="." mode="webwork-iframe">
-                <xsl:with-param name="b-has-hint"     select="$b-has-inline-hint"/>
-                <xsl:with-param name="b-has-solution" select="$b-has-inline-solution"/>
+                <xsl:with-param name="b-has-hint"     select="$b-has-hint"/>
+                <xsl:with-param name="b-has-solution" select="$b-has-solution"/>
             </xsl:apply-templates>
         </xsl:otherwise>
     </xsl:choose>
 </xsl:template>
 
 
-<!-- Select the correct URL from four pre-generated choices -->
-<!-- and package up as an iframe for interactive version    -->
-<xsl:template match="webwork-reps" mode="webwork-iframe">
+<!-- Make a div with static preview content and attributes needed for script insertion -->
+<xsl:template match="webwork-reps" mode="webwork-json">
+    <xsl:param name="b-original"/>
     <xsl:param name="b-has-hint"/>
     <xsl:param name="b-has-solution"/>
 
-    <xsl:variable name="the-url">
+    <xsl:variable name="source-selector">
         <xsl:choose>
-            <xsl:when test="$b-has-hint and $b-has-solution">
-                <xsl:apply-templates select="server-url[@hint='yes' and @solution='yes']"/>
+            <xsl:when test="problemSource">
+                <xsl:text>problemSource</xsl:text>
             </xsl:when>
-            <xsl:when test="$b-has-hint and not($b-has-solution)">
-                <xsl:apply-templates select="server-url[@hint='yes' and @solution='no']"/>
+            <xsl:when test="@sourceFilePath">
+                <xsl:text>sourceFilePath</xsl:text>
             </xsl:when>
-            <xsl:when test="not($b-has-hint) and $b-has-solution">
-                <xsl:apply-templates select="server-url[@hint='no'  and @solution='yes']"/>
+            <xsl:otherwise>
+                <xsl:message>PTX:ERROR: Problem has neither problemSource nor sourceFilePath</xsl:message>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <xsl:variable name="source-value">
+        <xsl:choose>
+            <xsl:when test="problemSource">
+                <xsl:choose>
+                    <xsl:when test="$b-has-hint and $b-has-solution">
+                        <xsl:apply-templates select="problemSource[@hint='yes' and @solution='yes']"/>
+                    </xsl:when>
+                    <xsl:when test="$b-has-hint and not($b-has-solution)">
+                        <xsl:apply-templates select="problemSource[@hint='yes' and @solution='no']"/>
+                    </xsl:when>
+                    <xsl:when test="not($b-has-hint) and $b-has-solution">
+                        <xsl:apply-templates select="problemSource[@hint='no'  and @solution='yes']"/>
+                    </xsl:when>
+                    <xsl:when test="not($b-has-hint) and not($b-has-solution)">
+                        <xsl:apply-templates select="problemSource[@hint='no'  and @solution='no']"/>
+                    </xsl:when>
+                </xsl:choose>
             </xsl:when>
-            <xsl:when test="not($b-has-hint) and not($b-has-solution)">
-                <xsl:apply-templates select="server-url[@hint='no'  and @solution='no']"/>
+            <xsl:when test="@sourceFilePath">
+                <xsl:value-of select="@sourceFilePath"/>
             </xsl:when>
         </xsl:choose>
     </xsl:variable>
-    <!-- build the iframe -->
-    <!-- mimicking Mike Gage's blog post -->
-    <iframe width="100%" src="{$the-url}" base64="1" uri="1"/>
+
+    <div id="{@xml:id}" class="wwprob">
+        <form>
+        <xsl:apply-templates select="static" mode="exercise-components">
+            <xsl:with-param name="b-original" select="$b-original"/>
+            <xsl:with-param name="b-has-statement" select="true()"/>
+            <xsl:with-param name="b-has-hint"      select="false()"/>
+            <xsl:with-param name="b-has-answer"    select="false()"/>
+            <xsl:with-param name="b-has-solution"  select="false()"/>
+        </xsl:apply-templates>
+        </form>
+         <!-- <button>
+            <xsl:attribute name="onclick">
+                <xsl:text>new WebworkProblem('</xsl:text><xsl:value-of select="@xml:id"/><xsl:text>', {seed: '</xsl:text><xsl:value-of select="@seed"/><xsl:text>', </xsl:text><xsl:value-of select="$source-selector"/><xsl:text>: '</xsl:text><xsl:value-of select="$source-value"/><xsl:text>'})</xsl:text>
+            </xsl:attribute>
+            <xsl:text>Make Live</xsl:text>
+        </button> -->
+    </div>
     <script>
-        <xsl:text>iFrameResize({log:true,inPageLinks:true,resizeFrom:'child',checkOrigin:["</xsl:text>
-        <xsl:value-of select="$webwork-server" />
-        <xsl:text>"]})</xsl:text>
+        <xsl:text>new WebworkProblem({id: '</xsl:text><xsl:value-of select="@xml:id"/><xsl:text>', problemSeed: '</xsl:text><xsl:value-of select="@seed"/><xsl:text>', </xsl:text><xsl:value-of select="$source-selector"/><xsl:text>: '</xsl:text><xsl:value-of select="$source-value"/><xsl:text>'})</xsl:text>
     </script>
+
+    <!-- <script>
+        <xsl:text>insertWWproblem({id: '</xsl:text><xsl:value-of select="@xml:id"/><xsl:text>', seed: '</xsl:text><xsl:value-of select="@seed"/><xsl:text>', </xsl:text><xsl:value-of select="$source-selector"/><xsl:text>: '</xsl:text><xsl:value-of select="$source-value"/><xsl:text>'})</xsl:text>
+    </script> -->
 </xsl:template>
 
 <!-- In WeBWorK problems, a p whose only child is a fillin blank     -->
@@ -9099,8 +9433,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- jquery used by sage, webwork, knowls -->
             <xsl:call-template name="sagecell-code" />
             <xsl:call-template name="mathjax" />
-            <!-- webwork's iframeResizer needs to come before sage -->
-            <xsl:call-template name="webwork" />
             <xsl:apply-templates select="." mode="sagecell" />
             <xsl:call-template name="goggle-code-prettifier" />
             <xsl:call-template name="google-search-box-js" />
@@ -9114,6 +9446,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:call-template name="login-header" />
             <xsl:call-template name="pytutor-header" />
             <xsl:call-template name="font-awesome" />
+            <xsl:call-template name="webwork-header" />
         </head>
         <body>
             <!-- potential document-id per-page -->
@@ -9220,8 +9553,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- jquery used by sage, webwork, knowls -->
             <xsl:call-template name="sagecell-code" />
             <xsl:call-template name="mathjax" />
-            <!-- webwork's iframeResizer needs to come before sage -->
-            <xsl:call-template name="webwork" />
             <xsl:apply-templates select="." mode="sagecell" />
             <xsl:call-template name="knowl" />
             <xsl:call-template name="fonts" />
@@ -9230,6 +9561,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:call-template name="jsxgraph" />
             <xsl:call-template name="css" />
             <xsl:call-template name="font-awesome" />
+            <xsl:call-template name="webwork-header" />
         </head>
         <!-- TODO: needs some padding etc -->
         <body>

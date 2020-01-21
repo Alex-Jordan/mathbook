@@ -84,7 +84,7 @@ WWOUT      = $(SCRATCH)/webwork-extraction
 # Either specify only the protocol and domain (like https://webwork.yourschool.edu)
 # or specify a 5-tuple with quotes exactly as in this example
 # SERVER = "(https://webwork-ptx.aimath.org,courseID,userID,password,course_password)"
-SERVER = https://webwork-ptx.aimath.org
+SERVER = https://webwork-dev.aimath.org
 
 
 ################
