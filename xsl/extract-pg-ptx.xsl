@@ -100,7 +100,7 @@
     <xsl:text>pgptx['hint_no_solution_yes'] = {}&#xa;</xsl:text>
     <xsl:text>pgptx['hint_yes_solution_no'] = {}&#xa;</xsl:text>
     <xsl:text>pgptx['hint_yes_solution_yes'] = {}&#xa;</xsl:text>
-    <xsl:apply-templates select="$document-root//webwork[statement|stage]" mode="dictionaries"/>
+    <xsl:apply-templates select="$document-root//webwork[statement|stage|@copy]" mode="dictionaries"/>
 </xsl:template>
 
 <xsl:template match="webwork[statement|stage]" mode="dictionaries">
@@ -143,6 +143,58 @@
     <xsl:value-of select="$problem" />
     <xsl:text>"] = """</xsl:text>
     <xsl:apply-templates select=".">
+        <xsl:with-param name="b-hint" select="true()" />
+        <xsl:with-param name="b-solution" select="true()" />
+        <xsl:with-param name="b-verbose" select="false()" />
+    </xsl:apply-templates>
+    <xsl:text>"""&#xa;</xsl:text>
+</xsl:template>
+
+<!-- ################# -->
+<!-- Copy Another WW   -->
+<!-- ################# -->
+
+<xsl:template match="webwork[@copy]" mode="dictionaries">
+    <!-- Define values for the visible-id as key -->
+    <xsl:variable name="problem">
+        <xsl:apply-templates select="." mode="visible-id" />
+    </xsl:variable>
+    <xsl:variable name="copy" select="@copy"/>
+
+    <xsl:text>pgptx['hint_no_solution_no']["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:apply-templates select="$document-root//webwork[@xml:id=$copy]">
+        <xsl:with-param name="b-hint" select="false()" />
+        <xsl:with-param name="b-solution" select="false()" />
+        <xsl:with-param name="b-verbose" select="false()" />
+    </xsl:apply-templates>
+    <xsl:text>"""&#xa;</xsl:text>
+
+    <xsl:text>pgptx['hint_no_solution_yes']["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:apply-templates select="$document-root//webwork[@xml:id=$copy]">
+        <xsl:with-param name="b-hint" select="false()" />
+        <xsl:with-param name="b-solution" select="true()" />
+        <xsl:with-param name="b-verbose" select="false()" />
+    </xsl:apply-templates>
+    <xsl:text>"""&#xa;</xsl:text>
+
+    <xsl:text>pgptx['hint_yes_solution_no']["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:apply-templates select="$document-root//webwork[@xml:id=$copy]">
+        <xsl:with-param name="b-hint" select="true()" />
+        <xsl:with-param name="b-solution" select="false()" />
+        <xsl:with-param name="b-verbose" select="false()" />
+    </xsl:apply-templates>
+    <xsl:text>"""&#xa;</xsl:text>
+
+    <xsl:text>pgptx['hint_yes_solution_yes']["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:apply-templates select="$document-root//webwork[@xml:id=$copy]">
         <xsl:with-param name="b-hint" select="true()" />
         <xsl:with-param name="b-solution" select="true()" />
         <xsl:with-param name="b-verbose" select="false()" />

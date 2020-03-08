@@ -31,9 +31,10 @@
 <!-- single XML file called webwork-extraction.xml with various            -->
 <!-- representations of each webwork.                                      -->
 
-<!-- Each dictionary uses the webworks' visible-ids as keys. There are      -->
+<!-- Each dictionary uses the webworks' visible-ids as keys. There are     -->
 <!-- dictionaries for obtaining:                                           -->
-<!-- 1. a 'ptx'|'server' flag (is it authored in PTX or on the server?)    -->
+<!-- 1. a 'ptx'|'copy'|'server' flag (is it authored in PTX, a copy of     -->
+<!-- something authored in PTX, or an existing file on the server?)        -->
 <!-- 2. a seed for randomization (with a default explicitly declared)      -->
 <!-- 3. source (either the source XML or a problem's file path)            -->
 <!-- 4. human readable PG (or the problem's file path)                     -->
@@ -94,7 +95,7 @@
     <xsl:text>seed = {}&#xa;</xsl:text>
     <xsl:text>source = {}&#xa;</xsl:text>
     <xsl:text>pg = {}&#xa;</xsl:text>
-    <xsl:apply-templates select="//webwork[statement|stage|@source]" mode="dictionaries"/>
+    <xsl:apply-templates select="//webwork[statement|stage|@copy|@source]" mode="dictionaries"/>
 </xsl:template>
 
 <xsl:template match="webwork[statement|stage]" mode="dictionaries">
@@ -123,6 +124,38 @@
     <xsl:value-of select="$problem" />
     <xsl:text>"] = """</xsl:text>
     <xsl:apply-templates select=".">
+        <xsl:with-param name="b-verbose" select="true()" />
+    </xsl:apply-templates>
+    <xsl:text>"""&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="webwork[@copy]" mode="dictionaries">
+    <!-- Define values for the visible-id as key -->
+    <xsl:variable name="problem">
+        <xsl:apply-templates select="." mode="visible-id" />
+    </xsl:variable>
+    <xsl:variable name="copy" select="@copy"/>
+
+    <xsl:text>origin["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "copy"&#xa;</xsl:text>
+
+    <xsl:text>seed["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "</xsl:text>
+    <xsl:apply-templates select="." mode="get-seed" />
+    <xsl:text>"&#xa;</xsl:text>
+
+    <xsl:text>source["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:copy-of select="$document-root//webwork[@xml:id=$copy]" />
+    <xsl:text>"""&#xa;</xsl:text>
+
+    <xsl:text>pg["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:apply-templates select="$document-root//webwork[@xml:id=$copy]">
         <xsl:with-param name="b-verbose" select="true()" />
     </xsl:apply-templates>
     <xsl:text>"""&#xa;</xsl:text>
