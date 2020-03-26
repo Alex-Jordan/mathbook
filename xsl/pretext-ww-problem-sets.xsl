@@ -219,34 +219,41 @@
             <xsl:variable name="open" select="substring(date:date-time(),1,10)" />
             <xsl:variable name="due" select="date:add($open,'P6M')" />
             <xsl:variable name="answer" select="$due" />
-            <xsl:text>openDate          = </xsl:text>
+            <xsl:text>openDate           = </xsl:text>
             <xsl:value-of select="substring($open, 6, 2)" />
             <xsl:text>/</xsl:text>
             <xsl:value-of select="substring($open, 9, 2)" />
             <xsl:text>/</xsl:text>
             <xsl:value-of select="substring($open, 1, 4)" />
             <xsl:text> at 12:00am&#xa;</xsl:text>
-            <xsl:text>dueDate           = </xsl:text>
+            <xsl:text>reducedScoringDate = </xsl:text>
             <xsl:value-of select="substring($due, 6, 2)" />
             <xsl:text>/</xsl:text>
             <xsl:value-of select="substring($due, 9, 2)" />
             <xsl:text>/</xsl:text>
             <xsl:value-of select="substring($due, 1, 4)" />
             <xsl:text> at 10:00pm&#xa;</xsl:text>
-            <xsl:text>answerDate        = </xsl:text>
+            <xsl:text>dueDate            = </xsl:text>
             <xsl:value-of select="substring($due, 6, 2)" />
             <xsl:text>/</xsl:text>
             <xsl:value-of select="substring($due, 9, 2)" />
             <xsl:text>/</xsl:text>
             <xsl:value-of select="substring($due, 1, 4)" />
             <xsl:text> at 10:00pm&#xa;</xsl:text>
-            <xsl:text>paperHeaderFile   = </xsl:text>
+            <xsl:text>answerDate         = </xsl:text>
+            <xsl:value-of select="substring($due, 6, 2)" />
+            <xsl:text>/</xsl:text>
+            <xsl:value-of select="substring($due, 9, 2)" />
+            <xsl:text>/</xsl:text>
+            <xsl:value-of select="substring($due, 1, 4)" />
+            <xsl:text> at 10:00pm&#xa;</xsl:text>
+            <xsl:text>paperHeaderFile    = </xsl:text>
             <xsl:value-of select="$header-filename" />
             <xsl:text>&#xa;</xsl:text>
-            <xsl:text>screenHeaderFile  = </xsl:text>
+            <xsl:text>screenHeaderFile   = </xsl:text>
             <xsl:value-of select="$header-filename" />
             <xsl:text>&#xa;</xsl:text>
-            <xsl:text>description       = </xsl:text>
+            <xsl:text>description        = </xsl:text>
             <xsl:apply-templates select="." mode="title-simple" />
             <xsl:text>&#xa;</xsl:text>
             <!-- Version 2 problem list lead-in -->
@@ -278,7 +285,7 @@
     <!--WeBWorK provides good default values, customizable by sysadmin or instructor. -->
     <!--<xsl:text>value = 1&#xa;</xsl:text>--> <!-- default problem weight -->
     <!--<xsl:text>max_attempts = -1&#xa;</xsl:text>--> <!-- default max attempts is unlimited -->
-    <!--<xsl:text>showMeAnother = -1&#xa;</xsl:text>--> <!-- default SMA is off -->
+    <xsl:text>showMeAnother = -2&#xa;</xsl:text> <!-- means use the global value -->
     <xsl:text>problem_id = </xsl:text>
     <xsl:apply-templates select="ancestor::exercise" mode="serial-number" />
     <xsl:text>&#xa;</xsl:text>
