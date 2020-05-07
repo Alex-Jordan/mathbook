@@ -151,7 +151,7 @@ sample-chapter-html:
 	-rm $(HTMLOUT)/knowl/*.html
 	cp -a $(WWEXAMPLE)/sample-chapter/images $(HTMLOUT)
 	cd $(HTMLOUT); \
-	xsltproc --stringparam webwork.divisional.static no $(MBXSL)/pretext-html.xsl $(SCRATCH)/sample-chapter-merge.ptx;
+	xsltproc --stringparam debug.webwork.inline.randomize yes --stringparam webwork.divisional.static no $(MBXSL)/pretext-html.xsl $(SCRATCH)/sample-chapter-merge.ptx;
 
 mini-html:
 	install -d $(HTMLOUT)

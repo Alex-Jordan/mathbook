@@ -9386,6 +9386,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:when>
         <xsl:otherwise>
             <!-- dynamic, iframe -->
+            <!-- <xsl:if test="$b-webwork-divisional-randomize">
+                <xsl:apply-templates select="." mode="webwork-randomize-buttons"/>
+            </xsl:if> -->
             <xsl:apply-templates select="." mode="webwork-iframe">
                 <xsl:with-param name="b-has-hint"     select="$b-has-divisional-hint"/>
                 <xsl:with-param name="b-has-solution" select="$b-has-divisional-solution"/>
@@ -9409,6 +9412,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:when>
         <xsl:otherwise>
             <!-- dynamic, iframe -->
+            <!-- <xsl:if test="$b-webwork-reading-randomize">
+                <xsl:apply-templates select="." mode="webwork-randomize-buttons"/>
+            </xsl:if> -->
             <xsl:apply-templates select="." mode="webwork-iframe">
                 <xsl:with-param name="b-has-hint"     select="$b-has-reading-hint"/>
                 <xsl:with-param name="b-has-solution" select="$b-has-reading-solution"/>
@@ -9432,6 +9438,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:when>
         <xsl:otherwise>
             <!-- dynamic, iframe -->
+            <!-- <xsl:if test="$b-webwork-worksheet-randomize">
+                <xsl:apply-templates select="." mode="webwork-randomize-buttons"/>
+            </xsl:if> -->
             <xsl:apply-templates select="." mode="webwork-iframe">
                 <xsl:with-param name="b-has-hint"     select="$b-has-worksheet-hint"/>
                 <xsl:with-param name="b-has-solution" select="$b-has-worksheet-solution"/>

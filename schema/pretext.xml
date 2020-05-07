@@ -1588,11 +1588,13 @@
         WebWorkSource =
             element webwork {
                 attribute source {text}?,
-                attribute seed {xsd:integer}?
+                attribute seed {xsd:integer}?,
+                attribute versions {xsd:integer}?
             }
         WebWorkAuthored =
             element webwork {
                 attribute seed {xsd:integer}?,
+                attribute versions {xsd:integer}?,
                 WWMacros?,
                 element pg-code {text}?,
                 (

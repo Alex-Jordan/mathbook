@@ -100,19 +100,20 @@
     <introduction>
       <p>
         Try multiplying the exponents to see what feedback you get.
-        Also, try something no one should get credit for, like <c>x^2*x^5</c>.
+        Also, try something no one should get credit for, like repeating the statement as given.
       </p>
     </introduction>
-    <webwork>
+    <webwork versions="10">
       <pg-code>
         Context()->operators->set(
         '*' => {class => 'bizarro::BOP::multiply', isCommand => 1},
         ' *' => {class => 'bizarro::BOP::multiply', isCommand => 1},
         '* ' => {class => 'bizarro::BOP::multiply', isCommand => 1},
         );
-        $given = Formula("x^2 x^5");
-        $answer = Formula("x^7");
-        $special = Formula("x^10");
+        ($a,$b) = (2..6)[NchooseK(5,2)];
+        $given = Formula("x^$a x^$b");
+        $answer = Formula("x^($a+$b)");
+        $special = Formula("x^($a*$b)");
         $evaluator = $answer -> cmp(
           checker=>sub{
             my ( $correct, $student, $ansHash ) = @_;
@@ -248,7 +249,7 @@
         <url href="https://github.com/openwebwork/webwork-open-problem-library/blob/master/OpenProblemLibrary/PCC/BasicAlgebra/NumberBasics/FactorInteger10.pg"><c>Library/PCC/BasicAlgebra/NumberBasics/FactorInteger10.pg</c></url>.
       </p>
     </introduction>
-    <webwork source="Library/PCC/BasicAlgebra/NumberBasics/FactorInteger10.pg"/>
+    <webwork source="Library/PCC/BasicAlgebra/NumberBasics/FactorInteger10.pg" versions="12"/>
   </exercise>
 
   <exercise>
