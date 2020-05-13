@@ -250,8 +250,10 @@ the xsltproc executable.
                     <email>beezer@pugetsound.edu</email>
                 </author>
 
-                <!-- Can set date manually or use the "today" element -->
-                <date><today /></date>
+                <!-- Can set date manually or use the "today" element               -->
+                <!-- date may have "datetime" attribute. For valid values, see      -->
+                <!-- https://developer.mozilla.org/en-US/docs/Web/HTML/Element/time -->
+                <date><today/></date>
 
             </titlepage>
 

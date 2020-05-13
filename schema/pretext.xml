@@ -1878,6 +1878,7 @@
             }
         Date =
             element date {
+                attribute datetime {text}?,
                 mixed {(Character | Generator)*}
             }
         Abstract =

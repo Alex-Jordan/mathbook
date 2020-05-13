@@ -1140,10 +1140,26 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </div>
 </xsl:template>
 
-<!-- The time element has content that is "human readable" time -->
+<!-- The time element has content that is "human readable" time and its   -->
+<!-- datetime attribute is "machine readable". For valid datetime values, -->
+<!-- see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/time   -->
 <xsl:template match="titlepage/date">
     <div class="date">
-        <xsl:apply-templates />
+        <xsl:choose>
+            <xsl:when test="@datetime">
+                <time datetime="{@datetime}">
+                    <xsl:apply-templates/>
+                </time>
+            </xsl:when>
+            <xsl:when test="today">
+                <time datetime="{substring(date:date-time(),1,10)}">
+                    <xsl:apply-templates/>
+                </time>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates/>
+            </xsl:otherwise>
+        </xsl:choose>
     </div>
 </xsl:template>
 
