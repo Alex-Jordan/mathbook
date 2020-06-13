@@ -376,8 +376,111 @@
 <!-- ############################## -->
 
 <!-- Mine various parts of the surrounding text -->
-<!-- Only ever called in verbose mode           -->
-<xsl:template name="webwork-metadata">
+<!-- And use explicitly set metadata within the webwork -->
+<!-- Only ever called in verbose mode                   -->
+<xsl:template match="webwork" mode="webwork-metadata">
+    <xsl:apply-templates select="." mode="taxonomy"/>
+    <!-- would be hard to detect automatically -->
+    <xsl:text>## MO(</xsl:text>
+    <xsl:if test="@mathobjects">
+        <xsl:choose>
+            <xsl:when test="@mathobjects='yes'">
+                <xsl:text>1</xsl:text>
+            </xsl:when>
+            <xsl:when test="@mathobjects='no'">
+                <xsl:text>0</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:message>PTX:WARNING: "mathobjects" attribute should have value 'yes' or 'no' (or be omitted)</xsl:message>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <!-- would be hard to detect automatically -->
+    <xsl:text>## STATIC(</xsl:text>
+    <xsl:if test="@static">
+        <xsl:choose>
+            <xsl:when test="@static='yes'">
+                <xsl:text>1</xsl:text>
+            </xsl:when>
+            <xsl:when test="@static='no'">
+                <xsl:text>0</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:message>PTX:WARNING: "static" attribute should have value 'yes' or 'no' (or be omitted)</xsl:message>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## KEYWORDS(</xsl:text>
+    <xsl:if test="keyword">
+        <xsl:for-each select="keyword">
+            <xsl:text>'</xsl:text>
+            <!-- remove any quotes -->
+            <xsl:value-of select="str:replace(str:replace(., '&quot;', ''), $apos, '')"/>
+            <xsl:text>'</xsl:text>
+            <xsl:if test="not(position()=last())">
+                <xsl:text>, </xsl:text>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## TitleText1(</xsl:text>
+    <xsl:if test="$document-root/self::book|$document-root/self::article">
+        <xsl:apply-templates select="$document-root" mode="title-full" />
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## EditionText1(</xsl:text>
+    <xsl:if test="$document-root/frontmatter/colophon/edition">
+        <xsl:apply-templates select="$document-root/frontmatter/colophon/edition" />
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## AuthorText1(</xsl:text>
+    <xsl:if test="$document-root/self::book|$document-root/self::article">
+        <xsl:for-each select="$document-root/frontmatter/titlepage/author">
+            <xsl:value-of select="personname"/>
+            <xsl:if test="not(position()=last())">
+                <xsl:text>, </xsl:text>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <!-- Once we are cloning WW to multiple locations, consider hunting all such locations for Section1 and Problem1 -->
+    <!-- WW problem is always enclosed directly by an PTX exercise -->
+    <xsl:text>## Section1(</xsl:text>
+        <xsl:apply-templates select="parent::exercise" mode="structure-number" />
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## Problem1(</xsl:text>
+        <xsl:apply-templates select="parent::exercise" mode="number" />
+    <xsl:text>)&#xa;</xsl:text>
+    <!-- would be better to find the "author" of the closest ancestor   -->
+    <!-- also perhaps a "webwork" should be allowed to have an "author" -->
+    <xsl:text>## Author(</xsl:text>
+    <xsl:if test="$document-root/self::book|$document-root/self::article">
+        <xsl:for-each select="$document-root/frontmatter/titlepage/author">
+            <xsl:value-of select="personname"/>
+            <xsl:if test="not(position()=last())">
+                <xsl:text>, </xsl:text>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## Institution(</xsl:text>
+    <xsl:if test="$document-root/self::book|$document-root/self::article">
+        <xsl:for-each select="$document-root/frontmatter/titlepage/author">
+            <xsl:value-of select="institution"/>
+            <xsl:if test="not(position()=last())">
+                <xsl:text>, </xsl:text>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:if>
+    <xsl:text>)&#xa;</xsl:text>
+    <xsl:text>## Language(</xsl:text>
+        <xsl:value-of select="$document-language"/>
+    <xsl:text>)&#xa;&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="webwork" mode="taxonomy">
     <xsl:text>## DBsubject(</xsl:text>
     <xsl:text>)&#xa;</xsl:text>
     <xsl:text>## DBchapter(</xsl:text>
@@ -386,44 +489,31 @@
     <xsl:text>)&#xa;</xsl:text>
     <xsl:text>## Level(</xsl:text>
     <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## KEYWORDS(</xsl:text>
+</xsl:template>
+
+<!-- For OPL Taxonomy, see OpenProblemLibrary/Taxonomy2 in the WeBWorK OPL repository  -->
+<!-- For levels, see https://webwork.maa.org/wiki/Problem_Levels                       -->
+<!-- TODO: validate against legal taxonomy strings. DBsubject and Level would be       -->
+<!-- easy to validate in schema. The other two would be a challenge to validate at all -->
+<xsl:template match="webwork/taxonomy[1]">
+    <xsl:text>## DBsubject(</xsl:text>
+    <xsl:value-of select="."/>
     <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## TitleText1(</xsl:text>
-    <xsl:if test="/mathbook/book|/mathbook/article">
-        <xsl:apply-templates select="/mathbook/book|/mathbook/article" mode="title-full" />
-    </xsl:if>
+</xsl:template>
+<xsl:template match="webwork/taxonomy[2]">
+    <xsl:text>## DBchapter(</xsl:text>
+    <xsl:value-of select="."/>
     <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## EditionText1(</xsl:text>
-    <xsl:if test="/mathbook/book/frontmatter/colophon/edition">
-        <xsl:apply-templates select="/mathbook/book/frontmatter/colophon/edition" />
-    </xsl:if>
+</xsl:template>
+<xsl:template match="webwork/taxonomy[3]">
+    <xsl:text>## DBsection(</xsl:text>
+    <xsl:value-of select="."/>
     <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## AuthorText1(</xsl:text>
-    <xsl:if test="/mathbook/book|/mathbook/article">
-        <xsl:for-each select="/mathbook/book/frontmatter/titlepage/author|/mathbook/article/frontmatter/titlepage/author">
-            <xsl:value-of select="personname"/>
-            <xsl:if test="not(position()=last())">
-                <xsl:text>, </xsl:text>
-            </xsl:if>
-        </xsl:for-each>
-    </xsl:if>
+</xsl:template>
+<xsl:template match="webwork/taxonomy[4]">
+    <xsl:text>## Level(</xsl:text>
+    <xsl:value-of select="."/>
     <xsl:text>)&#xa;</xsl:text>
-    <!-- needs structural enclosure inline v. divisional         -->
-    <!-- do not use structure number, makes overrides impossible -->
-    <xsl:text>## Section1(not reported</xsl:text>
-        <!-- <xsl:apply-templates select="ancestor::exercise" mode="structure-number" /> -->
-    <xsl:text>)&#xa;</xsl:text>
-    <!-- WW problem is always enclosed directly by an PTX exercise -->
-    <xsl:text>## Problem1(</xsl:text>
-        <xsl:apply-templates select="parent::exercise" mode="number" />
-    <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## Author(</xsl:text>
-    <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## Institution(</xsl:text>
-    <xsl:text>)&#xa;</xsl:text>
-    <xsl:text>## Language(</xsl:text>
-        <xsl:value-of select="$document-language"/>
-    <xsl:text>)&#xa;&#xa;</xsl:text>
 </xsl:template>
 
 
