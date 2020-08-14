@@ -60,21 +60,11 @@
 <!-- package.opf is main metadata file             -->
 <!-- (META-INF/container.xml will point to it)     -->
 <!-- Unlikely to need to change this, but we could -->
-<xsl:variable name="content-dir">
-    <xsl:text>EPUB</xsl:text>
-</xsl:variable>
-<xsl:variable name="css-dir">
-    <xsl:text>css</xsl:text>
-</xsl:variable>
-<xsl:variable name="xhtml-dir">
-    <xsl:text>xhtml</xsl:text>
-</xsl:variable>
-<xsl:variable name="package-file">
-    <xsl:text>package.opf</xsl:text>
-</xsl:variable>
-<xsl:variable name="endnote-file">
-    <xsl:text>endnotes.xhtml</xsl:text>
-</xsl:variable>
+<xsl:variable name="content-dir" select="'EPUB'"/>
+<xsl:variable name="css-dir" select="'css'"/>
+<xsl:variable name="xhtml-dir" select="'xhtml'"/>
+<xsl:variable name="package-file" select="'package.opf'"/>
+<xsl:variable name="endnote-file" select="'endnotes.xhtml'"/>
 
 <!-- A publisher file can set HTML styling which will apply  -->
 <!-- here since EPUB is just packaged-up XHTML.  We get two  -->
@@ -90,9 +80,7 @@
 <!-- dc:identifier element in the metadata section   -->
 <!-- So we fix it here for uniformity                -->
 <!-- TODO: determine a better way to provide this    -->
-<xsl:variable name="uid-string">
-    <xsl:text>pub-id</xsl:text>
-</xsl:variable>
+<xsl:variable name="uid-string" select="'pub-id'"/>
 <xsl:variable name="mock-UUID">mock-123456789-0-987654321</xsl:variable>
 
 <!-- We hard-code the chunking level.  Level 2 is       -->
@@ -937,9 +925,7 @@ width: 100%
 <!-- Font Awesome CSS loading, $icon-table is in -common -->
 <xsl:template match="icon">
     <!-- the name attribute of the "icon" in text as a string -->
-    <xsl:variable name="icon-name">
-        <xsl:value-of select="@name"/>
-    </xsl:variable>
+    <xsl:variable name="icon-name" select="@name"/>
 
     <!-- for-each is just one node, but sets context for key() -->
     <xsl:for-each select="$icon-table">

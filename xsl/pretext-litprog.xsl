@@ -62,9 +62,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- allowing multiple files as output -->
 <!-- Otherwise process as a fragment   -->
 <xsl:template match="fragment[@filename]">
-    <xsl:variable name="filename">
-        <xsl:value-of select="@filename" />
-    </xsl:variable>
+    <xsl:variable name="filename" select="@filename"/>
     <exsl:document href="{$filename}" method="text">
         <xsl:apply-templates />
     </exsl:document>

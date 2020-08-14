@@ -6129,9 +6129,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- URL encode via: https://meyerweb.com/eric/tools/dencoder/     -->
 <!-- Then add a bit of voodoo, and this may be used as the value   -->
 <!-- of the HTML5 video/@poster attribute (and other places?)      -->
-<xsl:variable name="generic-preview-svg-data-uri">
-    <xsl:text>data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%2014%2096%2068%22%20style%3D%22cursor%3Apointer%3B%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill%3D%22%23e62117%22%20d%3D%22M94.98%2C28.84c0%2C0-0.94-6.6-3.81-9.5c-3.64-3.81-7.72-3.83-9.59-4.05c-13.4-0.97-33.52-0.85-33.52-0.85s-20.12-0.12-33.52%2C0.85c-1.87%2C0.22-5.95%2C0.24-9.59%2C4.05c-2.87%2C2.9-3.81%2C9.5-3.81%2C9.5S0.18%2C36.58%2C0%2C44.33v7.26c0.18%2C7.75%2C1.14%2C15.49%2C1.14%2C15.49s0.93%2C6.6%2C3.81%2C9.5c3.64%2C3.81%2C8.43%2C3.69%2C10.56%2C4.09c7.53%2C0.72%2C31.7%2C0.89%2C32.54%2C0.9c0.01%2C0%2C20.14%2C0.03%2C33.54-0.94c1.87-0.22%2C5.95-0.24%2C9.59-4.05c2.87-2.9%2C3.81-9.5%2C3.81-9.5s0.96-7.75%2C1.02-15.49v-7.26C95.94%2C36.58%2C94.98%2C28.84%2C94.98%2C28.84z%20M38.28%2C61.41v-27l25.74%2C13.5L38.28%2C61.41z%22%2F%3E%3C%2Fsvg%3E</xsl:text>
-</xsl:variable>
+<xsl:variable name="generic-preview-svg-data-uri" select="'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%2014%2096%2068%22%20style%3D%22cursor%3Apointer%3B%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill%3D%22%23e62117%22%20d%3D%22M94.98%2C28.84c0%2C0-0.94-6.6-3.81-9.5c-3.64-3.81-7.72-3.83-9.59-4.05c-13.4-0.97-33.52-0.85-33.52-0.85s-20.12-0.12-33.52%2C0.85c-1.87%2C0.22-5.95%2C0.24-9.59%2C4.05c-2.87%2C2.9-3.81%2C9.5-3.81%2C9.5S0.18%2C36.58%2C0%2C44.33v7.26c0.18%2C7.75%2C1.14%2C15.49%2C1.14%2C15.49s0.93%2C6.6%2C3.81%2C9.5c3.64%2C3.81%2C8.43%2C3.69%2C10.56%2C4.09c7.53%2C0.72%2C31.7%2C0.89%2C32.54%2C0.9c0.01%2C0%2C20.14%2C0.03%2C33.54-0.94c1.87-0.22%2C5.95-0.24%2C9.59-4.05c2.87-2.9%2C3.81-9.5%2C3.81-9.5s0.96-7.75%2C1.02-15.49v-7.26C95.94%2C36.58%2C94.98%2C28.84%2C94.98%2C28.84z%20M38.28%2C61.41v-27l25.74%2C13.5L38.28%2C61.41z%22%2F%3E%3C%2Fsvg%3E'"/>
 
 <!-- LaTeX watermark uses default 5cm font which is then scaled by watermark.scale -->
 <!-- We copy that here. We also copy the 45 degree angle.                          -->
@@ -7217,9 +7215,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <xsl:template match="mag">
-    <xsl:variable name="mag">
-        <xsl:value-of select="."/>
-    </xsl:variable>
+    <xsl:variable name="mag" select="."/>
     <xsl:variable name="math-pi">
         <xsl:call-template name="begin-inline-math" />
         <xsl:text>\pi</xsl:text>
@@ -7246,9 +7242,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
     <!-- prefix is optional -->
     <xsl:if test="@prefix">
-        <xsl:variable name="prefix">
-            <xsl:value-of select="@prefix" />
-        </xsl:variable>
+        <xsl:variable name="prefix" select="@prefix"/>
         <xsl:variable name="short">
             <xsl:for-each select="document('pretext-units.xsl')">
                 <xsl:value-of select="key('prefix-key',concat('prefixes',$prefix))/@short"/>
@@ -7257,9 +7251,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:value-of select="$short" />
     </xsl:if>
     <!-- base unit is required -->
-    <xsl:variable name="base">
-        <xsl:value-of select="@base" />
-    </xsl:variable>
+    <xsl:variable name="base" select="@base"/>
     <xsl:variable name="short">
         <xsl:for-each select="document('pretext-units.xsl')">
             <xsl:value-of select="key('base-key',concat('bases',$base))/@short"/>
@@ -7844,9 +7836,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Presumes CSS headers have been loaded -->
 <xsl:template match="icon">
     <!-- the name attribute of the "icon" in text as a string -->
-    <xsl:variable name="icon-name">
-        <xsl:value-of select="@name"/>
-    </xsl:variable>
+    <xsl:variable name="icon-name" select="@name"/>
 
     <!-- for-each is just one node, but sets context for key() -->
     <xsl:variable name="fa-name">
@@ -7871,9 +7861,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <xsl:template match="kbd[@name]">
     <!-- the name attribute of the "kbd" in text as a string -->
-    <xsl:variable name="kbdkey-name">
-        <xsl:value-of select="@name"/>
-    </xsl:variable>
+    <xsl:variable name="kbdkey-name" select="@name"/>
     <!-- Entirely similar HTML/CSS, but will hold a Unicode character -->
     <kbd class="kbdkey">
         <!-- for-each is just one node, but sets context for key() -->
@@ -9155,17 +9143,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="width-percent">
         <xsl:apply-templates select="." mode="get-width-percentage" />
     </xsl:variable>
-    <xsl:variable name="width-fraction">
-        <xsl:value-of select="substring-before($width-percent,'%') div 100" />
-    </xsl:variable>
+    <xsl:variable name="width-fraction" select="substring-before($width-percent,'%') div 100"/>
     <xsl:variable name="aspect-ratio">
         <xsl:apply-templates select="." mode="get-aspect-ratio">
             <xsl:with-param name="default-aspect" select="'1:1'" />
         </xsl:apply-templates>
     </xsl:variable>
     <!-- these are now standardized templates -->
-    <xsl:variable name="width"  select="$design-width * $width-fraction" />
-    <xsl:variable name="height" select="$design-width * $width-fraction div $aspect-ratio" />
+    <xsl:variable name="width"  select="$design-width * $width-fraction"/>
+    <xsl:variable name="height" select="$design-width * $width-fraction div $aspect-ratio"/>
     <!-- the div to hold the JSX output -->
     <xsl:element name="div">
         <xsl:attribute name="id">
@@ -10944,9 +10930,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- First a variable to massage the author-supplied -->
 <!-- package list to the form MathJax expects        -->
-<xsl:variable name="latex-packages-mathjax">
-    <xsl:value-of select="str:replace($latex-packages, '\usepackage{', '\require{')" />
-</xsl:variable>
+<xsl:variable name="latex-packages-mathjax" select="str:replace($latex-packages, '\usepackage{', '\require{')"/>
 
 
 <!-- MathJax expects math wrapping, and we place in   -->

@@ -625,9 +625,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:variable name="reveal-root">
     <!-- CDN is used twice, so just edit here -->
     <!-- NB: deprecation is frozen -->
-    <xsl:variable name="cdn-url">
-        <xsl:text>https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.8.0</xsl:text>
-    </xsl:variable>
+    <xsl:variable name="cdn-url" select="'https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.8.0'"/>
 
     <xsl:choose>
         <!-- if publisher.xml file has CDN option specified, use it       -->

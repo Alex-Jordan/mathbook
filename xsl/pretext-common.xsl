@@ -279,9 +279,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- We set this variable a bit differently -->
 <!-- for different conversions, so this is  -->
 <!-- basically an abstract implementation   -->
-<xsl:variable name="chunk-level">
-    <xsl:text>0</xsl:text>
-</xsl:variable>
+<xsl:variable name="chunk-level" select="'0'"/>
 
 <!-- Flag Table of Contents, or not, with boolean variable -->
 <xsl:variable name="b-has-toc" select="$toc-level != 0" />
@@ -356,17 +354,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- This is set (temporarily) in docinfo, which will change           -->
 <!-- We do no special error-checking here since this will change       -->
 <!-- The variable will be empty if not set                             -->
-<xsl:variable name="numbering-exercises">
-    <xsl:value-of select="$docinfo/numbering/exercises/@level"/>
-</xsl:variable>
+<xsl:variable name="numbering-exercises" select="$docinfo/numbering/exercises/@level"/>
 
 <!-- Figure-Like can optionally run on their own numbering scheme      -->
 <!-- This is set (temporarily) in docinfo, which will change           -->
 <!-- We do no special error-checking here since this will change       -->
 <!-- The variable will be empty if not set                             -->
-<xsl:variable name="numbering-figures">
-    <xsl:value-of select="$docinfo/numbering/figures/@level"/>
-</xsl:variable>
+<xsl:variable name="numbering-figures" select="$docinfo/numbering/figures/@level"/>
 
 <!-- User-supplied Numbering for Equations    -->
 <!-- Respect switch, or provide sensible defaults -->
@@ -488,9 +482,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- use this to distinguish one document from another.  -->
 <!-- The global variable here is empty to signal         -->
 <!-- "no choice" by the author.                          -->
-<xsl:variable name="document-id">
-    <xsl:value-of select="$docinfo/document-id"/>
-</xsl:variable>
+<xsl:variable name="document-id" select="$docinfo/document-id"/>
 
 <!-- This is used to build standalone pages.  Despite looking   -->
 <!-- like a property of the HTML conversion, it gets used in    -->
@@ -504,9 +496,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- source on different servers.  It is in "docinfo" as a      -->
 <!-- convenience during development stages.                     -->
 <!-- NB: Presumed to not have a trailing slash                  -->
-<xsl:variable name="baseurl">
-    <xsl:value-of select="$docinfo/html/baseurl/@href"/>
-</xsl:variable>
+<xsl:variable name="baseurl" select="$docinfo/html/baseurl/@href"/>
 
 <!-- The new version can return to the generic version  -->
 <!-- once we kill the dashed version for author use.    -->
@@ -2484,18 +2474,12 @@ Book (with parts), "section" at level 3
 
 <!-- We need to identify particular characters   -->
 <!-- space, tab, carriage return, newline        -->
-<xsl:variable name="whitespaces">
-    <xsl:text>&#x20;&#x9;&#xD;&#xA;</xsl:text>
-</xsl:variable>
+<xsl:variable name="whitespaces" select="'&#x20;&#x9;&#xD;&#xA;'"/>
 <!-- space, tab, carriage return, newline        -->
-<xsl:variable name="blanks">
-    <xsl:text>&#x20;&#x9;</xsl:text>
-</xsl:variable>
+<xsl:variable name="blanks" select="'&#x20;&#x9;'"/>
 <!-- Punctuation ending a clause of a sentence   -->
 <!-- Asymmetric: no space, mark, space           -->
-<xsl:variable name="clause-ending-marks">
-    <xsl:text>.?!:;,</xsl:text>
-</xsl:variable>
+<xsl:variable name="clause-ending-marks" select="'.?!:;,'"/>
 
 <!-- Sanitize Code -->
 <!-- No leading whitespace, no trailing -->
@@ -3946,9 +3930,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:variable name="raw-title">
         <xsl:apply-templates select="." mode="title-simple"/>
     </xsl:variable>
-    <xsl:variable name="letter-only-title">
-        <xsl:value-of select="translate($raw-title, translate($raw-title, concat(&SIMPLECHAR;,' '), ''), '')" />
-    </xsl:variable>
+    <xsl:variable name="letter-only-title" select="translate($raw-title, translate($raw-title, concat(&SIMPLECHAR;,' '), ''), '')"/>
     <xsl:value-of select="translate($letter-only-title, ' ', '_')" />
 </xsl:template>
 
@@ -4262,9 +4244,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:variable name="width-percent">
         <xsl:apply-templates select="." mode="get-width-percentage" />
     </xsl:variable>
-    <xsl:variable name="width-fraction">
-        <xsl:value-of select="substring-before($width-percent,'%') div 100" />
-    </xsl:variable>
+    <xsl:variable name="width-fraction" select="substring-before($width-percent,'%') div 100"/>
     <xsl:value-of select="round($design-width-pixels * $width-fraction)" />
 </xsl:template>
 
@@ -4275,9 +4255,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:variable name="width-percent">
         <xsl:apply-templates select="." mode="get-width-percentage" />
     </xsl:variable>
-    <xsl:variable name="width-fraction">
-        <xsl:value-of select="substring-before($width-percent,'%') div 100" />
-    </xsl:variable>
+    <xsl:variable name="width-fraction" select="substring-before($width-percent,'%') div 100"/>
     <xsl:variable name="aspect-ratio">
         <xsl:apply-templates select="." mode="get-aspect-ratio">
             <xsl:with-param name="default-aspect" select="$default-aspect" />
@@ -4512,9 +4490,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 
 <xsl:template match="icon">
     <!-- the name attribute of the "icon" in text as a string -->
-    <xsl:variable name="icon-name">
-        <xsl:value-of select="@name"/>
-    </xsl:variable>
+    <xsl:variable name="icon-name" select="@name"/>
 
     <!-- for-each is just one node, but sets context for key() -->
     <xsl:for-each select="$icon-table">
@@ -8614,12 +8590,8 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- these, and so this template may never be hit         -->
 <!-- (or only rarely?)                                    -->
 <xsl:template match="xref[@provisional]">
-    <xsl:variable name="inline-warning">
-        <xsl:value-of select="@provisional" />
-    </xsl:variable>
-    <xsl:variable name="margin-warning">
-        <xsl:text>Provisional xref</xsl:text>
-    </xsl:variable>
+    <xsl:variable name="inline-warning" select="@provisional"/>
+    <xsl:variable name="margin-warning" select="'Provisional xref'"/>
     <xsl:call-template name="inline-warning">
         <xsl:with-param name="warning" select="$inline-warning" />
     </xsl:call-template>
@@ -11040,15 +11012,11 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- [0-9]*\.?[0-9]*%          -->
 <xsl:template name="normalize-percentage">
     <xsl:param name="percentage" />
-    <xsl:variable name="stripped-percentage">
-        <xsl:value-of select="normalize-space($percentage)" />
-    </xsl:variable>
+    <xsl:variable name="stripped-percentage" select="normalize-space($percentage)" />
     <xsl:if test="substring($stripped-percentage,string-length($stripped-percentage)) != '%'">
         <xsl:message terminate="yes">MBX:FATAL:   expecting a percentage ending in '%'; got <xsl:value-of select="$stripped-percentage"/></xsl:message>
     </xsl:if>
-    <xsl:variable name="percent">
-        <xsl:value-of select="normalize-space(substring($stripped-percentage,1,string-length($stripped-percentage) - 1))" />
-    </xsl:variable>
+    <xsl:variable name="percent" select="normalize-space(substring($stripped-percentage,1,string-length($stripped-percentage) - 1))"/>
     <xsl:if test="number($percent) != $percent">
         <xsl:message terminate="yes">MBX:FATAL:   expecting a numerical value preceding '%'; got <xsl:value-of select="$percent"/></xsl:message>
     </xsl:if>
