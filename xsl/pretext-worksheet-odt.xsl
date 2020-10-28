@@ -39,6 +39,10 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     xmlns:officeooo="http://openoffice.org/2009/office"
     xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
     xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    xmlns:pi="http://pretextbook.org/2020/pretext/internal"
+    xmlns:math="http://www.w3.org/1998/Math/MathML"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
 >
 
 <xsl:import href="./pretext-common.xsl" />
@@ -46,6 +50,17 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Intend output is xml for an Open Document Text package (.odt file) -->
 <xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes" />
+
+<!-- Math content needs to be exported to a math file before running this style sheet -->
+<xsl:param name="math.mml.file" select="''"/>
+<xsl:param name="math.svg.file" select="''"/>
+<xsl:param name="math.speech.file" select="''"/>
+
+<xsl:variable name="math-mml-repr" select="document($math.mml.file)/pi:math-representations"/>
+<xsl:variable name="math-svg-repr" select="document($math.svg.file)/pi:math-representations"/>
+<xsl:variable name="math-speech-repr" select="document($math.speech.file)/pi:math-representations"/>
+
+
 
 <!-- ################ -->
 <!-- Design variables -->
@@ -870,11 +885,61 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     </text:list-item>
 </xsl:template>
 
+<!-- #### -->
+<!-- Math -->
+<!-- #### -->
+<xsl:template match="m">
+    <xsl:variable name="id">
+        <xsl:apply-templates select="." mode="visible-id"/>
+    </xsl:variable>
+    <draw:frame
+        draw:style-name="Inline-math"
+        draw:name="{$id}"
+        text:anchor-type="as-char"
+        svg:y="0.172in"
+        >
+        <draw:object
+            xlink:href="./{$id}"
+            xlink:type="simple"
+        />
+    </draw:frame>
+    <xsl:variable name="folder">
+        <xsl:apply-templates select="ancestor::worksheet" mode="folder"/>
+    </xsl:variable>
+    <!-- Note: exsl:document is already writing to the folder for this worksheet, -->
+    <!-- so file paths used here for the math object files are relative to that.  -->
+    <xsl:variable name="contentfilepathname" select="concat($id,'/content.xml')" />
+    <xsl:variable name="math-mml" select="$math-mml-repr/pi:math[@id = $id]/div/math:math/math:*"/>
+    <xsl:variable name="math-svg" select="$math-svg-repr/pi:math[@id = $id]/div/*"/>
+    <xsl:variable name="math-speech" select="$math-speech-repr/pi:math[@id = $id]/div/text()"/>
+    <exsl:document href="{$contentfilepathname}" method="xml" version="1.0">
+        <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE math PUBLIC "-//W3C//DTD MathML 3.0//EN" "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd"&gt;&#xa;</xsl:text>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <xsl:text>&#xa;  </xsl:text>
+            <xsl:apply-templates select="$math-mml" mode="copy"/>
+        </math>
+    </exsl:document>
+    <xsl:variable name="settingsfilepathname" select="concat($id,'/settings.xml')" />
+    <exsl:document href="{$settingsfilepathname}" method="xml" version="1.0">
+        <office:document-settings office:version="1.3" />
+    </exsl:document>
+</xsl:template>
+
+<!-- essentially copy-of, but without copying namespace nodes   -->
+<!-- or the data-mjx- attributes (for MathML schema compliance) -->
+<xsl:template match="*" mode="copy">
+  <xsl:element name="{name()}" namespace="{namespace-uri()}">
+    <xsl:apply-templates select="@*[not(substring(name(),1,9) = 'data-mjx-')]|node()" mode="copy" />
+  </xsl:element>
+</xsl:template>
+
+<xsl:template match="@*|text()|comment()" mode="copy">
+  <xsl:copy/>
+</xsl:template>
 
 <!-- ############# -->
 <!-- File building -->
 <!-- ############# -->
-
 <!-- Append a filename to the directory path              -->
 <xsl:template match="worksheet" mode="folder">
     <xsl:text>worksheets/</xsl:text>
@@ -956,6 +1021,9 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                         style:letter-kerning="true"
                     />
                 </style:default-style>
+                <style:default-style
+                    style:family="graphic"
+                />
                 <!-- A typical paragraph -->
                 <style:style
                     style:name="P"
@@ -1262,6 +1330,21 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                         />
                     </style:style>
                 </xsl:if>
+                <!-- Math -->
+                <style:style
+                    style:name="Formula"
+                    style:family="graphic"
+                />
+                <style:style
+                    style:name="Inline-math"
+                    style:family="graphic"
+                    style:parent-style-name="Formula"
+                    >
+                    <style:graphic-properties
+                        style:vertical-pos="below"
+                        text:anchor-type="as-char"
+                    />
+                </style:style>
                 <!-- Headings -->
                 <!-- First, very generic heading styling -->
                 <style:style
@@ -1876,6 +1959,15 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             <manifest:file-entry manifest:full-path="settings.xml" manifest:media-type="text/xml"/>
             <manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>
             <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>
+            <xsl:variable name="m" select=".//m"/>
+            <xsl:for-each select="$m">
+                <xsl:variable name="id">
+                    <xsl:apply-templates select="." mode="visible-id"/>
+                </xsl:variable>
+                <manifest:file-entry manifest:full-path="{$id}/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.formula"/>
+                <manifest:file-entry manifest:full-path="{$id}/content.xml" manifest:media-type="text/xml"/>
+                <manifest:file-entry manifest:full-path="{$id}/settings.xml" manifest:media-type="text/xml"/>
+            </xsl:for-each>
         </manifest:manifest>
     </exsl:document>
 </xsl:template>
