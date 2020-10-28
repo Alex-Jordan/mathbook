@@ -173,12 +173,12 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 <!-- Paragraphs, with displays within                    -->
 <!-- Later, so a higher priority match                   -->
-<!-- Lists are ODT blocks                                -->
+<!-- Lists and display math are ODT blocks               -->
 <!-- and so should not be within an ODT paragraph.       -->
 <!-- We bust them out.                                   -->
-<xsl:template match="p[ol|ul|dl]">
+<xsl:template match="p[ol|ul|dl|me]">
     <!-- will later loop over lists within paragraph -->
-    <xsl:variable name="displays" select="ol|ul|dl" />
+    <xsl:variable name="displays" select="ol|ul|dl|me" />
     <!-- content prior to first display is exceptional, but if empty,   -->
     <!-- as indicated by $initial, we do not produce an empty paragraph -->
     <!-- all interesting nodes of paragraph, before first display       -->
@@ -895,7 +895,6 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     <draw:frame
         draw:style-name="Inline-math"
         draw:name="{$id}"
-        text:anchor-type="as-char"
         svg:y="0.172in"
         >
         <draw:object
@@ -914,6 +913,44 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="math-speech" select="$math-speech-repr/pi:math[@id = $id]/div/text()"/>
     <exsl:document href="{$contentfilepathname}" method="xml" version="1.0">
         <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE math PUBLIC "-//W3C//DTD MathML 3.0//EN" "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd"&gt;&#xa;</xsl:text>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <xsl:text>&#xa;  </xsl:text>
+            <xsl:apply-templates select="$math-mml" mode="copy"/>
+        </math>
+    </exsl:document>
+    <xsl:variable name="settingsfilepathname" select="concat($id,'/settings.xml')" />
+    <exsl:document href="{$settingsfilepathname}" method="xml" version="1.0">
+        <office:document-settings office:version="1.3" />
+    </exsl:document>
+</xsl:template>
+
+<xsl:template match="me">
+    <xsl:variable name="id">
+        <xsl:apply-templates select="." mode="visible-id"/>
+    </xsl:variable>
+    <text:p text:style-name="P-display">
+        <draw:frame
+            draw:style-name="Display-math"
+            draw:name="{$id}"
+            svg:y="0.172in"
+            >
+            <draw:object
+                xlink:href="./{$id}"
+                xlink:type="simple"
+            />
+        </draw:frame>
+    </text:p>
+    <xsl:variable name="folder">
+        <xsl:apply-templates select="ancestor::worksheet" mode="folder"/>
+    </xsl:variable>
+    <!-- Note: exsl:document is already writing to the folder for this worksheet, -->
+    <!-- so file paths used here for the math object files are relative to that.  -->
+    <xsl:variable name="contentfilepathname" select="concat($id,'/content.xml')" />
+    <xsl:variable name="math-mml" select="$math-mml-repr/pi:math[@id = $id]/div/math:math/math:*"/>
+    <xsl:variable name="math-svg" select="$math-svg-repr/pi:math[@id = $id]/div/*"/>
+    <xsl:variable name="math-speech" select="$math-speech-repr/pi:math[@id = $id]/div/text()"/>
+    <exsl:document href="{$contentfilepathname}" method="xml" version="1.0">
+        <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE math PUBLIC "-//W3C//DTD MathML 3.0//EN" "http://www.w3.org/Math/DTD/mathml3/mathml3.dtd"&gt;&#xa;</xsl:text>
         <math xmlns="http://www.w3.org/1998/Math/MathML">
             <xsl:text>&#xa;  </xsl:text>
             <xsl:apply-templates select="$math-mml" mode="copy"/>
@@ -1053,6 +1090,17 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                     >
                     <style:paragraph-properties
                         fo:margin-bottom="0.16608in"
+                    />
+                </style:style>
+                <!-- Paragraph style for centered displayed items -->
+                <style:style
+                    style:name="P-display"
+                    style:family="paragraph"
+                    >
+                    <style:paragraph-properties
+                        fo:margin-bottom="0.08304in"
+                        fo:text-indent="0in"
+                        fo:text-align="center"
                     />
                 </style:style>
                 <style:style
@@ -1343,6 +1391,16 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                     <style:graphic-properties
                         style:vertical-pos="below"
                         text:anchor-type="as-char"
+                    />
+                </style:style>
+                <style:style
+                    style:name="Display-math"
+                    style:family="graphic"
+                    style:parent-style-name="Formula"
+                    >
+                    <style:graphic-properties
+                        style:vertical-pos="below"
+                        text:anchor-type="paragraph"
                     />
                 </style:style>
                 <!-- Headings -->
@@ -1959,7 +2017,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             <manifest:file-entry manifest:full-path="settings.xml" manifest:media-type="text/xml"/>
             <manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>
             <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>
-            <xsl:variable name="m" select=".//m"/>
+            <xsl:variable name="m" select=".//m|.//me"/>
             <xsl:for-each select="$m">
                 <xsl:variable name="id">
                     <xsl:apply-templates select="." mode="visible-id"/>

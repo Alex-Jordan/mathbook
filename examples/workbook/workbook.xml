@@ -59,6 +59,10 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                     <p>
                         This is an introduction paragraph before the exercises start.
                         It is long enough to wrap to a second line so we can see any indentation.
+                        You may need to use:
+                        <me>
+                            x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}
+                        </me>
                         This worksheet follows <xref ref="section"/>,
                         so that was a cross-reference to outside this worksheet.<fn>The second footnote of the book is in the first worksheet.</fn>
                     </p>
@@ -483,6 +487,27 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                             One solution is <m>\frac{1+\sqrt{5}}{2}</m>.
                             This equation gives eigenvalues for the matrix <m>\begin{bmatrix}1\amp1\\1\amp0\end{bmatrix}</m>,
                             and also for <m>\begin{bmatrix}1\amp1\amp0\amp0\\1\amp0\amp0\amp0\\0\amp0\amp1\amp1\\0\amp0\amp1\amp0\end{bmatrix}</m>.
+                        </p>
+                        <p>
+                            A displayed equation:
+                            <me>
+                                1+1=2
+                            </me>
+                        </p>
+                        <p>
+                            A displayed equation:
+                            <me>
+                                \int_0^1 \frac{1}{x^x}\,dx=\sum_{n=1}^{\infty}\frac{1}{n^n}
+                            </me>
+                            with text that follows. The next one is the only thing in its <tag>p</tag>.
+                        </p>
+                        <p>
+                            <me>
+                                \begin{bmatrix}1\amp1\\1\amp0\end{bmatrix}=
+                                \frac{1}{\sqrt{5}}\begin{bmatrix}\frac{1+\sqrt{5}}{2}\amp\frac{1-\sqrt{5}}{2}\\1\amp1\end{bmatrix}
+                                \begin{bmatrix}\frac{1+\sqrt{5}}{2}\amp0\\0\amp\frac{1-\sqrt{5}}{2}\end{bmatrix}
+                                \begin{bmatrix}1\amp-\frac{1-\sqrt{5}}{2}\\-1\amp\frac{1+\sqrt{5}}{2}\end{bmatrix}
+                            </me>
                         </p>
                     </statement>
                 </exercise>
