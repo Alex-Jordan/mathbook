@@ -509,6 +509,27 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                                 \begin{bmatrix}1\amp-\frac{1-\sqrt{5}}{2}\\-1\amp\frac{1+\sqrt{5}}{2}\end{bmatrix}
                             </me>
                         </p>
+                        <p>
+                            A displayed equation with rows:
+                            <md>
+                                <mrow>1+1+1\amp=2+1</mrow>
+                                <mrow>\amp=3</mrow>
+                            </md>
+                        </p>
+                        <p>
+                            A displayed equation with rows:
+                            <md>
+                                <mrow>\int_0^1 e^x\,dx\amp=\left.e^x\right]_0^1</mrow>
+                                <mrow>\amp=e^1-e^0</mrow>
+                            </md>
+                            with text that follows. The next one is the only thing in its <tag>p</tag>.
+                        </p>
+                        <p>
+                            <md>
+                                <mrow>\begin{bmatrix}1\amp1\\1\amp0\end{bmatrix}^2\amp=\begin{bmatrix}1\amp1\\1\amp0\end{bmatrix}\begin{bmatrix}1\amp1\\1\amp0\end{bmatrix}</mrow>
+                                <mrow>\amp=\begin{bmatrix}2\amp1\\1\amp0\end{bmatrix}</mrow>
+                            </md>
+                        </p>
                     </statement>
                 </exercise>
             </worksheet>

@@ -176,9 +176,9 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Lists and display math are ODT blocks               -->
 <!-- and so should not be within an ODT paragraph.       -->
 <!-- We bust them out.                                   -->
-<xsl:template match="p[ol|ul|dl|me]">
+<xsl:template match="p[ol|ul|dl|me|md]">
     <!-- will later loop over lists within paragraph -->
-    <xsl:variable name="displays" select="ol|ul|dl|me" />
+    <xsl:variable name="displays" select="ol|ul|dl|me|md" />
     <!-- content prior to first display is exceptional, but if empty,   -->
     <!-- as indicated by $initial, we do not produce an empty paragraph -->
     <!-- all interesting nodes of paragraph, before first display       -->
@@ -894,11 +894,11 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:variable>
     <draw:frame
         draw:style-name="Inline-math"
-        draw:name="{$id}"
+        draw:name="Object-{$id}"
         svg:y="0.172in"
         >
         <draw:object
-            xlink:href="./{$id}"
+            xlink:href="./Object-{$id}"
             xlink:type="simple"
         />
     </draw:frame>
@@ -907,7 +907,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:variable>
     <!-- Note: exsl:document is already writing to the folder for this worksheet, -->
     <!-- so file paths used here for the math object files are relative to that.  -->
-    <xsl:variable name="contentfilepathname" select="concat($id,'/content.xml')" />
+    <xsl:variable name="contentfilepathname" select="concat('Object-',$id,'/content.xml')" />
     <xsl:variable name="math-mml" select="$math-mml-repr/pi:math[@id = $id]/div/math:math/math:*"/>
     <xsl:variable name="math-svg" select="$math-svg-repr/pi:math[@id = $id]/div/*"/>
     <xsl:variable name="math-speech" select="$math-speech-repr/pi:math[@id = $id]/div/text()"/>
@@ -918,24 +918,24 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="$math-mml" mode="copy"/>
         </math>
     </exsl:document>
-    <xsl:variable name="settingsfilepathname" select="concat($id,'/settings.xml')" />
+    <xsl:variable name="settingsfilepathname" select="concat('Object-',$id,'/settings.xml')" />
     <exsl:document href="{$settingsfilepathname}" method="xml" version="1.0">
         <office:document-settings office:version="1.3" />
     </exsl:document>
 </xsl:template>
 
-<xsl:template match="me">
+<xsl:template match="me|md">
     <xsl:variable name="id">
         <xsl:apply-templates select="." mode="visible-id"/>
     </xsl:variable>
     <text:p text:style-name="P-display">
         <draw:frame
             draw:style-name="Display-math"
-            draw:name="{$id}"
+            draw:name="Object-{$id}"
             svg:y="0.172in"
             >
             <draw:object
-                xlink:href="./{$id}"
+                xlink:href="./Object-{$id}"
                 xlink:type="simple"
             />
         </draw:frame>
@@ -945,7 +945,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:variable>
     <!-- Note: exsl:document is already writing to the folder for this worksheet, -->
     <!-- so file paths used here for the math object files are relative to that.  -->
-    <xsl:variable name="contentfilepathname" select="concat($id,'/content.xml')" />
+    <xsl:variable name="contentfilepathname" select="concat('Object-',$id,'/content.xml')" />
     <xsl:variable name="math-mml" select="$math-mml-repr/pi:math[@id = $id]/div/math:math/math:*"/>
     <xsl:variable name="math-svg" select="$math-svg-repr/pi:math[@id = $id]/div/*"/>
     <xsl:variable name="math-speech" select="$math-speech-repr/pi:math[@id = $id]/div/text()"/>
@@ -956,7 +956,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="$math-mml" mode="copy"/>
         </math>
     </exsl:document>
-    <xsl:variable name="settingsfilepathname" select="concat($id,'/settings.xml')" />
+    <xsl:variable name="settingsfilepathname" select="concat('Object-',$id,'/settings.xml')" />
     <exsl:document href="{$settingsfilepathname}" method="xml" version="1.0">
         <office:document-settings office:version="1.3" />
     </exsl:document>
@@ -1096,6 +1096,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                 <style:style
                     style:name="P-display"
                     style:family="paragraph"
+                    style:next-style-name="P"
                     >
                     <style:paragraph-properties
                         fo:margin-bottom="0.08304in"
@@ -2017,14 +2018,14 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             <manifest:file-entry manifest:full-path="settings.xml" manifest:media-type="text/xml"/>
             <manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>
             <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>
-            <xsl:variable name="m" select=".//m|.//me"/>
-            <xsl:for-each select="$m">
+            <xsl:variable name="math" select=".//m|.//me|.//md"/>
+            <xsl:for-each select="$math">
                 <xsl:variable name="id">
                     <xsl:apply-templates select="." mode="visible-id"/>
                 </xsl:variable>
-                <manifest:file-entry manifest:full-path="{$id}/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.formula"/>
-                <manifest:file-entry manifest:full-path="{$id}/content.xml" manifest:media-type="text/xml"/>
-                <manifest:file-entry manifest:full-path="{$id}/settings.xml" manifest:media-type="text/xml"/>
+                <manifest:file-entry manifest:full-path="Object-{$id}/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.formula"/>
+                <manifest:file-entry manifest:full-path="Object-{$id}/content.xml" manifest:media-type="text/xml"/>
+                <manifest:file-entry manifest:full-path="Object-{$id}/settings.xml" manifest:media-type="text/xml"/>
             </xsl:for-each>
         </manifest:manifest>
     </exsl:document>
