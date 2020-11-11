@@ -22,6 +22,11 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
 <!-- This file is a sample workbook with worksheet content. -->
 
 <pretext xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="en-US">
+    <docinfo>
+        <latex-image-preamble>
+            \usepackage{pgfplots}
+        </latex-image-preamble>
+    </docinfo>
     
     <book xml:id="workbook">
         <title>Sample Workbook</title>
@@ -474,6 +479,51 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                             This is the first exercise.
                             <fn>The fourth footnote of the book is in the second worksheet.</fn>
                         </p>
+                    </statement>
+                </exercise>
+                <exercise>
+                    <statement>
+                        <p>
+                            This exercise has source images in different formats and sizes.
+                        </p>
+                        <image source="trefoil.png" width="10%"/>
+                        <image source="pre-roll-countdown-1.jpg" width="20%"/>
+                        <image source="sageplot-polynomial-approximation.pdf" width="30%"/>
+                        <image source="complete-graph.svg" width="40%"/>
+                    </statement>
+                </exercise>
+                <exercise>
+                    <statement>
+                        <p>
+                            This exercise has coded images.
+                        </p>
+                        <image xml:id="building" width="47%">
+                            <latex-image>
+                              \definecolor{ruby}{HTML}{9e0c0f}
+                              \definecolor{turquoise}{HTML}{008099}
+                              \begin{tikzpicture}
+                                \begin{axis}[
+                                  axis x line=none,
+                                  axis y line=none,
+                                  xmin=-3,xmax=6,
+                                  ymin=-10,
+                                  ymax=150,
+                                  grid=none
+                                ]
+                                  \addplot[color=ruby, fill=ruby!30] coordinates{(-1.5,0)(-1.5,80)(0.5,80)(0.5,0)(-1.5,0)};
+                                  \addplot[color=black,fill=white] coordinates{(0.2,8)(0,8)(0,3)(0.2,3)(0.2,8)(0,8)(0.1,8)(0.1,3)(0.1,5.5)(0,5.5)(0.2,5.5)};
+                                  \addplot[color=black,fill=white] coordinates{(-1,8)(-1.2,8)(-1.2,3)(-1,3)(-1,8)(-1.2,8)(-1.1,8)(-1.1,3)(-1.1,5.5)(-1.2,5.5)(-1,5.5)};
+                                  \addplot[color=black,fill=black!40] coordinates{(-0.3,9)(-0.3,0)(-0.7,0)(-0.7,9)(-0.3,9)};
+                                  \addplot[color=black] coordinates{(-0.5,0)(-0.5,9)};
+                                  \foreach \x in {0,...,2}
+                                    \foreach \y in {0,...,5}
+                                      {\addplot[color=black,fill=white] coordinates{(0.6*\x-1,18+10*\y)(0.6*\x-1.2,18+10*\y)(0.6*\x-1.2,13+10*\y)(0.6*\x-1,13+10*\y)(0.6*\x-1,18+10*\y)(0.6*\x-1.2,18+10*\y)(0.6*\x-1.1,18+10*\y)(0.6*\x-1.1,13+10*\y)(0.6*\x-1.1,15.5+10*\y)(0.6*\x-1.2,15.5+10*\y)(0.6*\x-1,15.5+10*\y)};}
+                                  \addplot[color=black] coordinates{(-3,0)(6,0)};
+                                  \addplot[mark=*, samples=15, variable=\t, domain=0:5, smooth, -, color=turquoise] ({t}, {-16*t^2+64*t+80});
+                                \end{axis}
+                              \end{tikzpicture}
+                            </latex-image>
+                        </image>
                     </statement>
                 </exercise>
             </worksheet>

@@ -983,6 +983,104 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
   <xsl:copy/>
 </xsl:template>
 
+<!-- ###### -->
+<!-- Images -->
+<!-- ###### -->
+<xsl:template match="image">
+    <xsl:variable name="id">
+        <xsl:apply-templates select="." mode="visible-id"/>
+    </xsl:variable>
+    <xsl:variable name="rtf-layout">
+        <xsl:apply-templates select="." mode="layout-parameters" />
+    </xsl:variable>
+    <xsl:variable name="layout" select="exsl:node-set($rtf-layout)" />
+    <xsl:variable name="width" select="($layout/width) div 100 * $design-text-width"/>
+    <xsl:variable name="extension">
+        <xsl:apply-templates select="." mode="extension" />
+    </xsl:variable>
+    <xsl:variable name="type">
+        <xsl:apply-templates select="." mode="media-type" />
+    </xsl:variable>
+    <text:p
+        text:style-name="P-display"
+        >
+        <!-- TODO: this sets image height to 1 inch, all the time.           -->
+        <!-- We need to use external tools to get each image's actual height -->
+        <!-- (relative to the declared width) and use that instead.          -->
+        <draw:frame
+            draw:style-name="Image"
+            draw:name="{$id}"
+            svg:width="{$width}{$design-unit}"
+            svg:height="1in"
+            text:anchor-type="as-char"
+            >
+            <!-- draw:z-index="0" -->
+            <draw:image
+                xlink:href="images/{$id}.{$extension}"
+                xlink:type="simple"
+                xlink:show="embed"
+                xlink:actuate="onLoad"
+                draw:mime-type="{$type}"
+            />
+        </draw:frame>
+    </text:p>
+</xsl:template>
+
+<xsl:template match="image" mode="extension">
+    <xsl:choose>
+        <xsl:when test="@source">
+            <xsl:call-template name="file-extension">
+                <xsl:with-param name="filename" select="@source" />
+            </xsl:call-template>
+        </xsl:when>
+        <xsl:when test="latex-image|sageplot|asymptote">
+            <xsl:text>png</xsl:text>
+        </xsl:when>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="image" mode="media-type">
+    <xsl:choose>
+        <xsl:when test="@source">
+            <xsl:variable name="extension">
+                <xsl:call-template name="file-extension">
+                    <xsl:with-param name="filename" select="@source" />
+                </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+                <!-- defatult to png -->
+                <xsl:when test="$extension = ''">
+                    <xsl:text>image/png</xsl:text>
+                </xsl:when>
+                <xsl:when test="$extension = 'png'">
+                    <xsl:text>image/png</xsl:text>
+                </xsl:when>
+                <xsl:when test="$extension = 'pdf'">
+                    <xsl:text>application/pdf</xsl:text>
+                </xsl:when>
+                <xsl:when test="$extension = 'svg'">
+                    <xsl:text>image/svg+xml</xsl:text>
+                </xsl:when>
+                <xsl:when test="$extension = 'jpg'">
+                    <xsl:text>image/jpeg</xsl:text>
+                </xsl:when>
+                <xsl:when test="$extension = 'jpeg'">
+                    <xsl:text>image/jpeg</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>PTX:ERROR:   file extension of file with source <xsl:value-of select="@source"/> not recognized.</xsl:message>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:when test="latex-image|sageplot|asymptote">
+            <xsl:text>image/png</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message>PTX:ERROR:   unable to determine media type for image with visible id <xsl:apply-templates select="." mode="visible-id"/>.</xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
 <!-- ############# -->
 <!-- File building -->
 <!-- ############# -->
@@ -1413,6 +1511,16 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                         text:anchor-type="paragraph"
                     />
                 </style:style>
+                <!-- Images -->
+                <style:style
+                    style:name="Graphics"
+                    style:family="graphic"
+                />
+                <style:style
+                    style:name="Image"
+                    style:family="graphic"
+                    style:parent-style-name="Graphics"
+                />
                 <!-- Headings -->
                 <!-- First, very generic heading styling -->
                 <style:style
@@ -2035,6 +2143,19 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                 <manifest:file-entry manifest:full-path="Object-{$id}/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.formula"/>
                 <manifest:file-entry manifest:full-path="Object-{$id}/content.xml" manifest:media-type="text/xml"/>
                 <manifest:file-entry manifest:full-path="Object-{$id}/settings.xml" manifest:media-type="text/xml"/>
+            </xsl:for-each>
+            <xsl:variable name="images" select=".//image"/>
+            <xsl:for-each select="$images">
+                <xsl:variable name="id">
+                    <xsl:apply-templates select="." mode="visible-id"/>
+                </xsl:variable>
+                <xsl:variable name="extension">
+                    <xsl:apply-templates select="." mode="extension" />
+                </xsl:variable>
+                <xsl:variable name="type">
+                    <xsl:apply-templates select="." mode="media-type"/>
+                </xsl:variable>
+                <manifest:file-entry manifest:full-path="images/{$id}.{$extension}" manifest:media-type="{$type}"/>
             </xsl:for-each>
         </manifest:manifest>
     </exsl:document>
