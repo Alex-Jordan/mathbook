@@ -66,12 +66,21 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Design variables -->
 <!-- ################ -->
 
+<!-- We must do arithmetic on dimensions, so we keep the unit separate -->
+<xsl:variable name="design-unit" select="'in'" />
+<!-- Page size -->
+<xsl:variable name="design-page-width" select="8.5"/>
+<xsl:variable name="design-page-height" select="11"/>
+<!-- Margin and text size -->
+<xsl:variable name="design-margin-top" select="0.7874"/>
+<xsl:variable name="design-margin-bottom" select="0.7874"/>
+<xsl:variable name="design-margin-left" select="0.7874"/>
+<xsl:variable name="design-margin-right" select="0.7874"/>
+<xsl:variable name="design-text-width" select="$design-page-width - $design-margin-left - $design-margin-right"/>
+<xsl:variable name="design-text-height" select="$design-page-height - $design-margin-top - $design-margin-bottom"/>
 <!-- This length is used repeatedly for indentations   -->
 <!-- 0.34745in is 5ex in 12pt Latin Modern Roman       -->
-<!-- We must do arithmetic on this, like multiply by 2 -->
-<!-- So we put "in" in a separate variable             -->
 <xsl:variable name="design-indent" select="0.34745" />
-<xsl:variable name="design-unit" select="'in'" />
 
 
 
@@ -1935,14 +1944,14 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             <office:automatic-styles>
                 <style:page-layout style:name="Page">
                     <style:page-layout-properties
-                        fo:page-width="8.5in"
-                        fo:page-height="11in"
+                        fo:page-width="{$design-page-width}{$design-unit}"
+                        fo:page-height="{$design-page-height}{$design-unit}"
                         style:num-format="1"
                         style:print-orientation="portrait"
-                        fo:margin-top="0.7874in"
-                        fo:margin-bottom="0.7874in"
-                        fo:margin-left="0.7874in"
-                        fo:margin-right="0.7874in"
+                        fo:margin-top="{$design-margin-top}{$design-unit}"
+                        fo:margin-bottom="{$design-margin-bottom}{$design-unit}"
+                        fo:margin-left="{$design-margin-left}{$design-unit}"
+                        fo:margin-right="{$design-margin-right}{$design-unit}"
                         style:writing-mode="lr-tb"
                         >
                     </style:page-layout-properties>
