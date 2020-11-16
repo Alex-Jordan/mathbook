@@ -9847,6 +9847,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="p" />
         </xsl:when>
         <xsl:when test="line">
+            <xsl:if test="$b-header">
+                <xsl:text>\textbf{</xsl:text>
+            </xsl:if>
+            <xsl:if test="$b-vertical-header">
+                <xsl:text>\rotatebox{90}{</xsl:text>
+            </xsl:if>
             <xsl:text>\tablecelllines{</xsl:text>
             <xsl:call-template name="halign-specification">
                 <xsl:with-param name="align" select="$halign" />
@@ -9860,6 +9866,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- adding \textbf, \bfseries not 100% effective here -->
             <xsl:apply-templates select="line" />
             <xsl:text>}&#xa;</xsl:text>
+            <xsl:if test="$b-vertical-header">
+                <xsl:text>\space}</xsl:text>
+            </xsl:if>
+            <xsl:if test="$b-header">
+                <xsl:text>}</xsl:text>
+            </xsl:if>
         </xsl:when>
         <xsl:otherwise>
             <xsl:if test="$b-header">

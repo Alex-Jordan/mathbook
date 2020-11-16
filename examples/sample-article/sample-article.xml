@@ -5288,6 +5288,43 @@ the xsltproc executable.
             </table>
 
             <table>
+                <title>One Row Header with Lines</title>
+                <tabular>
+                    <row header="yes">
+                        <cell>State</cell>
+                        <cell>Population</cell>
+                        <cell>
+                            <line>Area</line>
+                            <line>(sq. mi.)</line>
+                        </cell>
+                        <cell>
+                            <line>Statehood</line>
+                            <line>(Year)</line>
+                        </cell>
+                    </row>
+                    <row>
+                        <cell>Washington</cell>
+                        <cell>7,614,893</cell>
+                        <cell>71,362</cell>
+                        <cell>1889</cell>
+                    </row>
+                    <row>
+                        <cell>Oregon</cell>
+                        <cell>4,217,737</cell>
+                        <cell>98,381</cell>
+                        <cell>1859</cell>
+                    </row>
+                    <row>
+                        <cell>California</cell>
+                        <cell>39,512,223</cell>
+                        <cell>163,696</cell>
+                        <cell>1850</cell>
+                    </row>
+                </tabular>
+            </table>
+
+
+            <table>
                 <title>Two Row Headers</title>
                 <tabular>
                     <row header="yes">
@@ -5331,6 +5368,42 @@ the xsltproc executable.
                         <cell>Population</cell>
                         <cell>Area (sq. mi.)</cell>
                         <cell>Statehood (Year)</cell>
+                    </row>
+                    <row>
+                        <cell>Washington</cell>
+                        <cell>7,614,893</cell>
+                        <cell>71,362</cell>
+                        <cell>1889</cell>
+                    </row>
+                    <row>
+                        <cell>Oregon</cell>
+                        <cell>4,217,737</cell>
+                        <cell>98,381</cell>
+                        <cell>1859</cell>
+                    </row>
+                    <row>
+                        <cell>California</cell>
+                        <cell>39,512,223</cell>
+                        <cell>163,696</cell>
+                        <cell>1850</cell>
+                    </row>
+                </tabular>
+            </table>
+
+            <table>
+                <title>One Vertical Row Header with Lines</title>
+                <tabular>
+                    <row header="vertical" valign="top">
+                        <cell>state</cell>
+                        <cell>Population</cell>
+                        <cell>
+                            <line>Area</line>
+                            <line>(sq. mi.)</line>
+                        </cell>
+                        <cell>
+                            <line>Statehood</line>
+                            <line>(Year)</line>
+                        </cell>
                     </row>
                     <row>
                         <cell>Washington</cell>
