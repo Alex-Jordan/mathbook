@@ -584,6 +584,327 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                 </exercise>
             </worksheet>
 
+            <worksheet>
+                <title>Tables</title>
+                <exercise>
+                    <statement>
+                        <p>
+                            This exercise has a tabular. With no layout control, it will occupy its <q>natural width</q> and be centered.
+                        </p>
+                        <tabular>
+                            <row>
+                                <cell>Washington</cell>
+                                <cell>7,614,893</cell>
+                                <cell>71,362</cell>
+                                <cell>1889</cell>
+                            </row>
+                            <row>
+                                <cell>Oregon</cell>
+                                <cell>4,217,737</cell>
+                                <cell>98,381</cell>
+                                <cell>1859</cell>
+                            </row>
+                            <row>
+                                <cell>California</cell>
+                                <cell>39,512,223</cell>
+                                <cell>163,696</cell>
+                                <cell>1850</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            And another with borders.
+                        </p>
+                        <tabular top="minor" left="minor" right="minor" bottom="minor">
+                            <row>
+                                <cell>Washington</cell>
+                                <cell>7,614,893</cell>
+                                <cell>71,362</cell>
+                                <cell>1889</cell>
+                            </row>
+                            <row>
+                                <cell>Oregon</cell>
+                                <cell>4,217,737</cell>
+                                <cell>98,381</cell>
+                                <cell>1859</cell>
+                            </row>
+                            <row>
+                                <cell>California</cell>
+                                <cell>39,512,223</cell>
+                                <cell>163,696</cell>
+                                <cell>1850</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            And another with irregular borders.
+                        </p>
+                        <tabular bottom="minor" top="major" left="major" right="medium">
+                            <col top="minor"/>
+                            <col />
+                            <col top="none" right="none"/>
+                            <col top="major" />
+                            <row>
+                                <cell>1234567890</cell>
+                                <cell>1234567890</cell>
+                                <cell right="minor">1234567890</cell>
+                                <cell>1234567890</cell>
+                            </row>
+                            <row bottom="none">
+                                <cell>First</cell>
+                                <cell bottom="major">Second</cell>
+                                <cell bottom="major" right="medium">Third</cell>
+                                <cell>Fourth</cell>
+                            </row>
+                            <row bottom="medium">
+                                <cell>A</cell>
+                                <cell>B</cell>
+                                <cell>C</cell>
+                                <cell>D</cell>
+                            </row>
+                            <row left="none">
+                                <cell bottom="none">1</cell>
+                                <cell bottom="minor">2</cell>
+                                <cell bottom="none">3</cell>
+                                <cell right="major">4</cell>
+                            </row>
+                            <row bottom="medium">
+                                <cell right="none">1</cell>
+                                <cell>2</cell>
+                                <cell>3</cell>
+                                <cell>4</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            And another with horizontal alignments.
+                        </p>
+                        <tabular top="major" left="major" right="minor" bottom="minor" halign="right">
+                            <col halign="left"/>
+                            <col/>
+                            <col/>
+                            <col right="major"/>
+                            <row>
+                                <cell>Washington</cell>
+                                <cell halign="center">7,614,893</cell>
+                                <cell>71,362</cell>
+                                <cell>1889</cell>
+                            </row>
+                            <row halign="center">
+                                <cell>Oregon</cell>
+                                <cell>4,217,737</cell>
+                                <cell halign="right">98,381</cell>
+                                <cell>1859</cell>
+                            </row>
+                            <row bottom="major">
+                                <cell>California</cell>
+                                <cell>39,512,223</cell>
+                                <cell>163,696</cell>
+                                <cell>1850</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            And another with lines and vertical alignments.
+                        </p>
+                        <tabular top="major" left="major" right="minor" bottom="minor" valign="bottom">
+                            <col/>
+                            <col/>
+                            <col/>
+                            <col right="major"/>
+                            <row>
+                                <cell>
+                                    <line>This</line>
+                                    <line>one</line>
+                                    <line>is really</line>
+                                    <line>tall</line>
+                                </cell>
+                                <cell>
+                                    <line>Two</line>
+                                    <line>Lines</line>
+                                </cell>
+                                <cell>One line</cell>
+                                <cell>One line</cell>
+                            </row>
+                            <row valign="middle">
+                                <cell>
+                                    <line>Two</line>
+                                    <line>Lines</line>
+                                </cell>
+                                <cell>
+                                    <line>This</line>
+                                    <line>one</line>
+                                    <line>is really</line>
+                                    <line>tall</line>
+                                </cell>
+                                <cell>One line</cell>
+                                <cell>One line</cell>
+                            </row>
+                            <row bottom="major" valign="top">
+                                <cell>
+                                    <line>Two</line>
+                                    <line>Lines</line>
+                                </cell>
+                                <cell>One line</cell>
+                                <cell>
+                                    <line>This</line>
+                                    <line>one</line>
+                                    <line>is really</line>
+                                    <line>tall</line>
+                                </cell>
+                                <cell>One line</cell>
+                            </row>
+                        </tabular>
+                    </statement>
+                </exercise>
+
+                <exercise>
+                    <statement>
+                        <p>
+                            This table has cells that span multiple columns.
+                        </p>
+                        <tabular top="minor" left="minor" halign="center">
+                            <col right="medium"/>
+                            <col right="major"/>
+                            <col />
+                            <!--  -->
+                            <row bottom="medium">
+                                <cell colspan="2">1111, 2222</cell>
+                                <cell right="minor">3333</cell>
+                            </row>
+                            <row bottom="major">
+                                <cell>aaaa</cell>
+                                <cell colspan="2" right="medium">bbbb,cccc</cell>
+                            </row>
+                            <row>
+                                <cell bottom="minor">AAAA</cell>
+                                <cell bottom="medium">BBBB</cell>
+                                <cell bottom="major" right="major">CCCC</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            This table has header cells.
+                        </p>
+                        <tabular>
+                            <row header="yes">
+                                <cell>State</cell>
+                                <cell>Population</cell>
+                                <cell>Area (sq. mi.)</cell>
+                                <cell>Statehood (Year)</cell>
+                            </row>
+                            <row>
+                                <cell>Washington</cell>
+                                <cell>7,614,893</cell>
+                                <cell>71,362</cell>
+                                <cell>1889</cell>
+                            </row>
+                            <row>
+                                <cell>Oregon</cell>
+                                <cell>4,217,737</cell>
+                                <cell>98,381</cell>
+                                <cell>1859</cell>
+                            </row>
+                            <row>
+                                <cell>California</cell>
+                                <cell>39,512,223</cell>
+                                <cell>163,696</cell>
+                                <cell>1850</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            This table has header cells with lines.
+                        </p>
+                        <tabular>
+                            <row header="yes">
+                                <cell>State</cell>
+                                <cell>Population</cell>
+                                <cell>
+                                    <line>Area</line>
+                                    <line>(sq. mi.)</line>
+                                </cell>
+                                <cell>
+                                    <line>Statehood</line>
+                                    <line>(Year)</line>
+                                </cell>
+                            </row>
+                            <row>
+                                <cell>Washington</cell>
+                                <cell>7,614,893</cell>
+                                <cell>71,362</cell>
+                                <cell>1889</cell>
+                            </row>
+                            <row>
+                                <cell>Oregon</cell>
+                                <cell>4,217,737</cell>
+                                <cell>98,381</cell>
+                                <cell>1859</cell>
+                            </row>
+                            <row>
+                                <cell>California</cell>
+                                <cell>39,512,223</cell>
+                                <cell>163,696</cell>
+                                <cell>1850</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            This table has several rows of header cells.
+                        </p>
+                        <tabular top="minor" left="minor" right="minor" bottom="minor">
+                            <row header="yes" halign="center">
+                                <cell colspan="4">Food</cell>
+                            </row>
+                            <row header="yes" halign="center">
+                                <cell colspan="2">Plant</cell>
+                                <cell colspan="2">Animal</cell>
+                            </row>
+                            <row header="yes">
+                                <cell>Fruit</cell>
+                                <cell>Vegetable</cell>
+                                <cell>Meat</cell>
+                                <cell>Dairy</cell>
+                            </row>
+                            <row>
+                                <cell>Apple</cell>
+                                <cell>Beet</cell>
+                                <cell>Chicken</cell>
+                                <cell>Delice de Bourgogne</cell>
+                            </row>
+                            <row>
+                                <cell>Banana</cell>
+                                <cell>Cabbage</cell>
+                                <cell>Duck</cell>
+                                <cell>Eggs</cell>
+                            </row>
+                        </tabular>
+                        <p>
+                            This table has vertical header cells.
+                        </p>
+                        <tabular>
+                            <row header="vertical">
+                                <cell>State</cell>
+                                <cell>Population</cell>
+                                <cell>Area (sq. mi.)</cell>
+                                <cell>Statehood (Year)</cell>
+                            </row>
+                            <row>
+                                <cell>Washington</cell>
+                                <cell>7,614,893</cell>
+                                <cell>71,362</cell>
+                                <cell>1889</cell>
+                            </row>
+                            <row>
+                                <cell>Oregon</cell>
+                                <cell>4,217,737</cell>
+                                <cell>98,381</cell>
+                                <cell>1859</cell>
+                            </row>
+                            <row>
+                                <cell>California</cell>
+                                <cell>39,512,223</cell>
+                                <cell>163,696</cell>
+                                <cell>1850</cell>
+                            </row>
+                        </tabular>
+                    </statement>
+                </exercise>
+            </worksheet>
+
         </chapter>
     </book>
 </pretext>

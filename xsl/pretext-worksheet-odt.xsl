@@ -43,6 +43,8 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     xmlns:pi="http://pretextbook.org/2020/pretext/internal"
     xmlns:math="http://www.w3.org/1998/Math/MathML"
     xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
 >
 
 <xsl:import href="./pretext-common.xsl" />
@@ -261,6 +263,44 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:otherwise>
         </xsl:choose>
     </xsl:for-each>
+</xsl:template>
+<!-- Paragraphs within a table cell -->
+<xsl:template match="tabular/row/cell/p">
+    <xsl:variable name="col">
+        <xsl:apply-templates select="parent::cell/parent::row" mode="get-column-count">
+            <xsl:with-param name="up-to-cell" select="count(parent::cell/preceding-sibling::cell) + 1"/>
+        </xsl:apply-templates>
+    </xsl:variable>
+    <xsl:variable name="alignment">
+        <xsl:choose>
+            <!-- cell attribute first -->
+            <xsl:when test="ancestor::cell/@halign">
+                <xsl:value-of select="ancestor::cell/@halign" />
+            </xsl:when>
+            <!-- parent row attribute next -->
+            <xsl:when test="ancestor::row/@halign">
+                <xsl:value-of select="ancestor::row/@halign" />
+            </xsl:when>
+            <!-- col attribute next -->
+            <xsl:when test="ancestor::tabular/col[$col]/@halign">
+                <xsl:value-of select="ancestor::tabular/col[$col]/@halign" />
+            </xsl:when>
+            <!-- table attribute last -->
+            <xsl:when test="ancestor::tabular/@halign">
+                <xsl:value-of select="ancestor::tabular/@halign" />
+            </xsl:when>
+            <!-- HTML default is left, we write it for consistency -->
+            <xsl:otherwise>
+                <xsl:text>left</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <text:p>
+        <xsl:attribute name="text:style-name">
+            <xsl:value-of select="concat('P-',$alignment)"/>
+        </xsl:attribute>
+        <xsl:apply-templates/>
+    </text:p>
 </xsl:template>
 
 <!-- ##################################### -->
@@ -1081,6 +1121,357 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
+<!-- ####### -->
+<!-- Tabular -->
+<!-- ####### -->
+<!--
+    margins.
+    width control (It's just line width divided equally among columns).
+    headers.
+    paragraph cells.
+-->
+<!-- Modeled after HTML -->
+<xsl:template match="tabular[not(ancestor::sidebyside)]">
+    <text:p
+        text:style-name="P-display"
+        >
+        <xsl:variable name="width">
+            <xsl:apply-templates select="." mode="get-line-width"/>
+        </xsl:variable>
+        <draw:frame
+            draw:style-name="Tabular-wrapper"
+            text:anchor-type="as-char"
+            svg:width="{$width}{$design-unit}"
+            draw:z-index="0"
+            >
+            <draw:text-box fo:min-height="0in">
+                <xsl:apply-templates select="." mode="tabular-inclusion">
+                    <xsl:with-param name="width" select="'100%'" />
+                </xsl:apply-templates>
+            </draw:text-box>
+        </draw:frame>
+    </text:p>
+</xsl:template>
+
+<xsl:template match="tabular" mode="tabular-inclusion">
+    <xsl:param name="width" select="$width"/>
+    <!-- Abort if tabular's cols have widths summing to over 100% -->
+    <xsl:call-template name="cap-width-at-one-hundred-percent">
+        <xsl:with-param name="nodeset" select="col/@width" />
+    </xsl:call-template>
+    <xsl:variable name="id">
+        <xsl:apply-templates select="." mode="visible-id"/>
+    </xsl:variable>
+    <!-- NB: table styles seem ineffective in styles.xml, but are effective in context.xml as automatic styles -->
+    <table:table table:name="{$id}" table:style-name="{$id}">
+        <xsl:apply-templates select="." mode="columns"/>
+        <!-- We *actively* enforce header rows being (a) initial, and      -->
+        <!-- (b) contiguous.  So following two-part match will do no harm  -->
+        <!-- to correct source, but will definitely harm incorrect source. -->
+        <xsl:apply-templates select="row[@header]">
+            <xsl:with-param name="ambient-relative-width" select="$width" />
+        </xsl:apply-templates>
+        <xsl:apply-templates select="row[not(@header)]">
+            <xsl:with-param name="ambient-relative-width" select="$width" />
+        </xsl:apply-templates>
+    </table:table>
+</xsl:template>
+
+<xsl:template match="tabular" mode="columns">
+    <xsl:variable name="col-count">
+        <xsl:apply-templates select="." mode="get-column-count"/>
+    </xsl:variable>
+    <table:table-column
+        table:number-columns-repeated="{$col-count}"
+    />
+</xsl:template>
+
+<!-- A row of table -->
+<xsl:template match="row">
+    <xsl:param name="ambient-relative-width" />
+    <!-- Form the ODT table row -->
+    <table:table-row>
+        <!-- Walk the cells of the row -->
+        <xsl:call-template name="row-cells">
+            <xsl:with-param name="ambient-relative-width">
+                <xsl:value-of select="$ambient-relative-width" />
+            </xsl:with-param>
+            <xsl:with-param name="the-cell" select="cell[1]" />
+            <xsl:with-param name="left-col" select="ancestor::tabular/col[1]" />  <!-- possibly empty -->
+        </xsl:call-template>
+    </table:table-row>
+</xsl:template>
+
+<xsl:template name="row-cells">
+    <xsl:param name="ambient-relative-width" />
+    <xsl:param name="the-cell" />
+    <xsl:param name="left-col" />
+    <!-- A cell may span several columns, or default to just 1              -->
+    <!-- When colspan is not trivial, we identify the col elements          -->
+    <!-- for the left and right ends of the span                            -->
+    <!-- When colspan is trivial, the left and right versions are identical -->
+    <!-- Left is used for left border and for horizontal alignment          -->
+    <!-- Right is used for right border                                     -->
+    <xsl:variable name="column-span">
+        <xsl:choose>
+            <xsl:when test="$the-cell/@colspan">
+                <xsl:value-of select="$the-cell/@colspan" />
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>1</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <!-- For a "normal" 1-column cell this variable effectively makes a copy -->
+    <xsl:variable name="right-col" select="($left-col/self::*|$left-col/following-sibling::col)[position()=$column-span]" />
+    <!-- Look ahead one column, anticipating recursion   -->
+    <!-- but also probing for end of row (no more cells) -->
+    <xsl:variable name="next-cell" select="$the-cell/following-sibling::cell[1]" />
+    <xsl:variable name="next-col"  select="$right-col/following-sibling::col[1]" /> <!-- possibly empty -->
+    <xsl:if test="$the-cell">
+        <!-- build an ODT cell                                          -->
+        <!-- we set properties in various variables,                    -->
+        <!-- then write them as attributes                              -->
+        <!-- Some properties belong in the style, not here              -->
+        <xsl:variable name="col">
+            <xsl:apply-templates select="$the-cell/parent::row" mode="get-column-count">
+                <xsl:with-param name="up-to-cell" select="count($the-cell/preceding-sibling::cell) + 1"/>
+            </xsl:apply-templates>
+        </xsl:variable>
+        <xsl:variable name="row" select="count($the-cell/parent::row/preceding-sibling::row) + 1"/>
+        <xsl:variable name="name">
+            <xsl:apply-templates select="ancestor::tabular" mode="visible-id"/>
+            <xsl:text>.</xsl:text>
+            <xsl:value-of select="substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ', $col, 1)"/>
+            <xsl:value-of select="$row"/>
+        </xsl:variable>
+        <!-- the element for the cell -->
+        <table:table-cell table:style-name="{$name}" office:value-type="string">
+            <xsl:if test="$column-span > 1">
+                <xsl:attribute name="table:number-columns-spanned">
+                    <xsl:value-of select="$column-span" />
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="$the-cell/p">
+                <xsl:attribute name="style">
+                    <xsl:text>max-width:</xsl:text>
+                    <xsl:choose>
+                        <xsl:when test="$left-col/@width">
+                            <xsl:variable name="width">
+                                <xsl:call-template name="normalize-percentage">
+                                    <xsl:with-param name="percentage" select="$left-col/@width" />
+                                </xsl:call-template>
+                            </xsl:variable>
+                            <xsl:value-of select="$design-width * substring-before($width, '%') div 100 * substring-before($ambient-relative-width, '%') div 100" />
+                            <xsl:text>px;</xsl:text>
+                        </xsl:when>
+                        <!-- If there is no $left-col/@width, terminate -->
+                        <xsl:otherwise>
+                            <xsl:message>MBX:FATAL:   cell with a "p" element has no corresponding col element with width attribute.</xsl:message>
+                            <xsl:apply-templates select="." mode="location-report" />
+                            <xsl:message terminate="yes">Quitting...</xsl:message>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </xsl:if>
+            <!-- process the actual contents           -->
+            <!-- condition on indicators of structure  -->
+            <!-- All "line", all "p", or mixed content -->
+            <!-- TODO: is it important to pass $b-original -->
+            <!-- flag into template for "line" elements?   -->
+            <xsl:choose>
+                <xsl:when test="$the-cell/p">
+                    <xsl:apply-templates select="$the-cell/p"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="$the-cell"/>
+                </xsl:otherwise>
+            </xsl:choose>
+        </table:table-cell>
+        <!-- need to have "covered cells" if there was a colspan > 1 -->
+        <xsl:call-template name="covered-cells">
+            <xsl:with-param name="count" select="$column-span - 1"/>
+        </xsl:call-template>
+        <!-- recurse forward, perhaps to an empty cell -->
+        <xsl:call-template name="row-cells">
+            <xsl:with-param name="ambient-relative-width" select="$ambient-relative-width" />
+            <xsl:with-param name="the-cell" select="$next-cell" />
+            <xsl:with-param name="left-col" select="$next-col" />
+        </xsl:call-template>
+    </xsl:if>
+    <!-- Arrive here only when we have no cell so      -->
+    <!-- we bail out of recursion with no action taken -->
+</xsl:template>
+
+<xsl:template name="covered-cells">
+    <xsl:param name="count"/>
+    <xsl:if test="$count > 0">
+        <table:covered-table-cell/>
+        <xsl:call-template name="covered-cells">
+            <xsl:with-param name="count" select="$count - 1"/>
+        </xsl:call-template>
+    </xsl:if>
+</xsl:template>
+
+<xsl:template match="tabular/row/cell">
+    <xsl:variable name="col">
+        <xsl:apply-templates select="parent::row" mode="get-column-count">
+            <xsl:with-param name="up-to-cell" select="count(preceding-sibling::cell) + 1"/>
+        </xsl:apply-templates>
+    </xsl:variable>
+    <xsl:variable name="alignment">
+        <xsl:text>-</xsl:text>
+        <xsl:choose>
+            <!-- cell attribute first -->
+            <xsl:when test="@halign">
+                <xsl:value-of select="@halign" />
+            </xsl:when>
+            <!-- parent row attribute next -->
+            <xsl:when test="parent::row/@halign">
+                <xsl:value-of select="parent::row/@halign" />
+            </xsl:when>
+            <!-- col attribute next -->
+            <xsl:when test="ancestor::tabular/col[$col]/@halign">
+                <xsl:value-of select="ancestor::tabular/col[$col]/@halign" />
+            </xsl:when>
+            <!-- table attribute last -->
+            <xsl:when test="ancestor::tabular/@halign">
+                <xsl:value-of select="ancestor::tabular/@halign" />
+            </xsl:when>
+            <!-- HTML default is left, we write it for consistency -->
+            <xsl:otherwise>
+                <xsl:text>left</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <xsl:variable name="header">
+        <!-- NB: I'm only able to get vertical headers if I use a LibreOffice extension -->
+        <!-- making the ODT not conform to spec. So we don't do this, and warn.         -->
+        <xsl:choose>
+            <xsl:when test="parent::row/@header = 'yes'">
+                <xsl:text>-header</xsl:text>
+            </xsl:when>
+            <xsl:when test="parent::row/@header = 'vertical'">
+                <xsl:message>PTX:WARNING: Unable to construct vertical table headers. Proceeding with horizontal headers.&#xa;</xsl:message>
+                <xsl:text>-header</xsl:text>
+            </xsl:when>
+            <xsl:otherwise/>
+        </xsl:choose>
+    </xsl:variable>
+    <xsl:choose>
+        <xsl:when test="p">
+            <xsl:apply-templates/>
+        </xsl:when>
+        <xsl:otherwise>
+            <text:p>
+                <xsl:attribute name="text:style-name">
+                    <xsl:value-of select="concat('P',$alignment,$header)"/>
+                </xsl:attribute>
+                <xsl:choose>
+                    <xsl:when test="line">
+                        <xsl:apply-templates select="line"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:apply-templates/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </text:p>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="tabular/row/cell/line">
+    <xsl:apply-templates/>
+    <xsl:if test="following-sibling::line">
+        <text:line-break/>
+    </xsl:if>
+</xsl:template>
+
+<xsl:template match="tabular" mode="get-column-count">
+    <xsl:param name="lower-bound" select="1"/>
+    <xsl:param name="row" select="1"/>    
+    <xsl:choose>
+        <!-- terminate if there are col elements we can just count -->
+        <xsl:when test="col">
+            <xsl:value-of select="count(col)"/>
+        </xsl:when>
+        <!-- if we have recursed to the last row, terminate -->
+        <xsl:when test="$row > count(row)">
+            <xsl:value-of select="$lower-bound"/>
+        </xsl:when>
+        <!-- recurse to the next row -->
+        <xsl:otherwise>
+            <xsl:variable name="this-row-col-count">
+                <xsl:apply-templates select="row[$row]" mode="get-column-count"/>
+            </xsl:variable>
+            <xsl:apply-templates select="." mode="get-column-count">
+                <xsl:with-param name="lower-bound">
+                    <xsl:choose>
+                        <xsl:when test="$this-row-col-count > $lower-bound">
+                            <xsl:value-of select="$this-row-col-count"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="$lower-bound"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:with-param>
+                <xsl:with-param name="row" select="$row + 1"/>
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="row" mode="get-column-count">
+    <xsl:param name="running-count" select="0"/>
+    <xsl:param name="cell" select="1"/>
+    <xsl:param name="up-to-cell" select="count(cell)"/>
+    <xsl:choose>
+        <!-- terminate if we have recursed to the last cell -->
+        <xsl:when test="$cell > $up-to-cell">
+            <xsl:value-of select="$running-count"/>
+        </xsl:when>
+        <!-- recurse to the next cell -->
+        <xsl:otherwise>
+            <xsl:variable name="cell-colspan">
+                <xsl:apply-templates select="cell[$cell]" mode="get-column-count"/>
+            </xsl:variable>
+            <xsl:apply-templates select="." mode="get-column-count">
+                <xsl:with-param name="running-count" select="$running-count + $cell-colspan"/>
+                <xsl:with-param name="cell" select="$cell + 1"/>
+                <xsl:with-param name="up-to-cell" select="$up-to-cell"/>
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="cell" mode="get-column-count">
+    <xsl:choose>
+        <xsl:when test="@colspan">
+            <xsl:value-of select="@colspan"/>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="1"/>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- ######### -->
+<!-- Utilities -->
+<!-- ######### -->
+<!-- Find the absolute width of the ambient line -->
+<xsl:template match="*" mode="get-line-width">
+    <xsl:choose>
+        <xsl:when test="not(ancestor::exercise) and not(ancestor::sidebyside)">
+            <xsl:value-of select="$design-text-width"/>
+        </xsl:when>
+        <xsl:when test="ancestor::exercise and not(ancestor::sidebyside)">
+            <xsl:value-of select="$design-text-width - $design-indent"/>
+        </xsl:when>
+    </xsl:choose>
+</xsl:template>
+
+
 <!-- ############# -->
 <!-- File building -->
 <!-- ############# -->
@@ -1116,6 +1507,7 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
             xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0"
             xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+            xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
             >
             <office:font-face-decls>
                 <style:font-face
@@ -1168,6 +1560,20 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                 <style:default-style
                     style:family="graphic"
                 />
+                <style:default-style
+                    style:family="table"
+                    >
+                    <style:table-properties
+                        table:border-model="collapsing"
+                    />
+                </style:default-style>
+                <style:default-style
+                    style:family="table-row"
+                    >
+                    <style:table-row-properties
+                        fo:keep-together="auto"
+                    />
+                </style:default-style>
                 <!-- A typical paragraph -->
                 <style:style
                     style:name="P"
@@ -1211,6 +1617,77 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                         fo:text-align="center"
                     />
                 </style:style>
+                <!-- Styles for p's within table cells -->
+                <style:style
+                    style:name="P-left"
+                    style:family="paragraph"
+                    style:next-style-name="P"
+                    >
+                    <style:paragraph-properties
+                        fo:text-indent="0in"
+                        fo:text-align="left"
+                    />
+                </style:style>
+                <style:style
+                    style:name="P-center"
+                    style:family="paragraph"
+                    style:next-style-name="P"
+                    >
+                    <style:paragraph-properties
+                        fo:text-indent="0in"
+                        fo:text-align="center"
+                    />
+                </style:style>
+                <style:style
+                    style:name="P-right"
+                    style:family="paragraph"
+                    style:next-style-name="P"
+                    >
+                    <style:paragraph-properties
+                        fo:text-indent="0in"
+                        fo:text-align="right"
+                    />
+                </style:style>
+                <style:style
+                    style:name="P-left-header"
+                    style:family="paragraph"
+                    style:next-style-name="P"
+                    >
+                    <style:paragraph-properties
+                        fo:text-indent="0in"
+                        fo:text-align="left"
+                    />
+                    <style:text-properties
+                        fo:font-weight="bold"
+                    />
+                </style:style>
+                <style:style
+                    style:name="P-center-header"
+                    style:family="paragraph"
+                    style:next-style-name="P"
+                    >
+                    <style:paragraph-properties
+                        fo:text-indent="0in"
+                        fo:text-align="center"
+                    />
+                    <style:text-properties
+                        fo:font-weight="bold"
+                    />
+                </style:style>
+                <style:style
+                    style:name="P-right-header"
+                    style:family="paragraph"
+                    style:next-style-name="P"
+                    >
+                    <style:paragraph-properties
+                        fo:text-indent="0in"
+                        fo:text-align="right"
+                    />
+                    <style:text-properties
+                        fo:font-weight="bold"
+                    />
+                </style:style>
+                <!-- Decorate a run-in title -->
                 <style:style
                     style:name="Runin-title"
                     style:family="text"
@@ -1521,6 +1998,39 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
                     style:family="graphic"
                     style:parent-style-name="Graphics"
                 />
+                <!-- Tabulars -->
+                <style:style
+                    style:name="Frame"
+                    style:family="graphic"
+                    >
+                    <style:graphic-properties
+                        text:anchor-type="paragraph"
+                        svg:x="0in"
+                        svg:y="0in"
+                        fo:margin-top="0.0791in"
+                        fo:margin-bottom="0.0791in"
+                        style:wrap="parallel"
+                        style:number-wrapped-paragraphs="no-limit"
+                        style:wrap-contour="false"
+                        style:vertical-pos="top"
+                        style:vertical-rel="paragraph-content"
+                        style:horizontal-pos="center"
+                        style:horizontal-rel="paragraph-content"
+                        fo:border="0.06pt
+                        solid
+                        #000000"
+                    />
+                </style:style>
+                <style:style
+                    style:name="Tabular-wrapper"
+                    style:family="graphic"
+                    style:parent-style-name="Frame"
+                    >
+                    <style:graphic-properties
+                        style:vertical-pos="top"
+                        style:vertical-rel="baseline"
+                    />
+                </style:style>
                 <!-- Headings -->
                 <!-- First, very generic heading styling -->
                 <style:style
@@ -2175,6 +2685,187 @@ along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.
             xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
             xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
             >
+            <office:automatic-styles>
+                <xsl:for-each select="//tabular">
+                    <xsl:variable name="name">
+                        <xsl:apply-templates select="." mode="visible-id"/>
+                    </xsl:variable>
+                    <xsl:variable name="width">
+                        <xsl:apply-templates select="." mode="get-line-width"/>
+                    </xsl:variable>
+                    <style:style
+                        style:name="{$name}"
+                        style:family="table"
+                        >
+                        <style:table-properties
+                            style:width="{$width}{$design-unit}"
+                            table:align="margins"
+                        />
+                    </style:style>
+                </xsl:for-each>
+                <xsl:for-each select="//tabular/row/cell">
+                    <xsl:variable name="col">
+                        <xsl:apply-templates select="parent::row" mode="get-column-count">
+                            <xsl:with-param name="up-to-cell" select="count(preceding-sibling::cell) + 1"/>
+                        </xsl:apply-templates>
+                    </xsl:variable>
+                    <xsl:variable name="row" select="count(parent::row/preceding-sibling::row) + 1"/>
+                    <xsl:variable name="name">
+                        <xsl:apply-templates select="ancestor::tabular" mode="visible-id"/>
+                        <xsl:text>.</xsl:text>
+                        <xsl:value-of select="substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ', $col, 1)"/>
+                        <xsl:value-of select="$row"/>
+                    </xsl:variable>
+                    <!-- top border -->
+                    <xsl:variable name="top">
+                        <xsl:choose>
+                            <!-- the first row of the table, so may have top border -->
+                            <!-- http://ajaxandxml.blogspot.com/2006/11/xsl-detect-first-of-type-element-in.html -->
+                            <xsl:when test="not(parent::row/preceding-sibling::row)">
+                                <xsl:choose>
+                                    <!-- col attribute first -->
+                                    <xsl:when test="ancestor::tabular/col[$col]/@top">
+                                        <xsl:value-of select="ancestor::tabular/col[$col]/@top" />
+                                    </xsl:when>
+                                    <!-- table attribute last -->
+                                    <xsl:when test="ancestor::tabular/@top">
+                                        <xsl:value-of select="ancestor::tabular/@top" />
+                                    </xsl:when>
+                                    <!-- default is none -->
+                                    <xsl:otherwise>
+                                        <xsl:text>none</xsl:text>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:when>
+                            <!-- not the first cell of the row, so no top border -->
+                            <xsl:otherwise>
+                                <xsl:text>none</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:variable>
+                    <!-- left border -->
+                    <xsl:variable name="left">
+                        <xsl:choose>
+                            <!-- the first cell of the row, so may have left border -->
+                            <xsl:when test="not(preceding-sibling::cell)">
+                                <xsl:choose>
+                                    <!-- row attribute first -->
+                                    <xsl:when test="parent::row/@left">
+                                        <xsl:value-of select="parent::row/@left" />
+                                    </xsl:when>
+                                    <!-- table attribute last -->
+                                    <xsl:when test="ancestor::tabular/@left">
+                                        <xsl:value-of select="ancestor::tabular/@left" />
+                                    </xsl:when>
+                                    <!-- default is none -->
+                                    <xsl:otherwise>
+                                        <xsl:text>none</xsl:text>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:when>
+                            <!-- not the first cell of the row, so no left border -->
+                            <xsl:otherwise>
+                                <xsl:text>none</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:variable>
+                    <!-- right border -->
+                    <xsl:variable name="right">
+                        <xsl:choose>
+                            <!-- cell attribute first -->
+                            <xsl:when test="@right">
+                                <xsl:value-of select="@right" />
+                            </xsl:when>
+                            <!-- not available on rows, col attribute next -->
+                            <xsl:when test="ancestor::tabular/col[$col]/@right">
+                                <xsl:value-of select="ancestor::tabular/col[$col]/@right" />
+                            </xsl:when>
+                            <!-- table attribute last -->
+                            <xsl:when test="ancestor::tabular/@right">
+                                <xsl:value-of select="ancestor::tabular/@right" />
+                            </xsl:when>
+                            <!-- default is none -->
+                            <xsl:otherwise>
+                                <xsl:text>none</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:variable>
+                    <!-- bottom border -->
+                    <xsl:variable name="bottom">
+                        <xsl:choose>
+                            <!-- cell attribute first -->
+                            <xsl:when test="@bottom">
+                                <xsl:value-of select="@bottom" />
+                            </xsl:when>
+                            <!-- parent row attribute next -->
+                            <xsl:when test="parent::row/@bottom">
+                                <xsl:value-of select="parent::row/@bottom" />
+                            </xsl:when>
+                            <!-- not available on columns, table attribute last -->
+                            <xsl:when test="ancestor::tabular/@bottom">
+                                <xsl:value-of select="ancestor::tabular/@bottom" />
+                            </xsl:when>
+                            <!-- default is none -->
+                            <xsl:otherwise>
+                                <xsl:text>none</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:variable>
+                    <!-- vertical alignment -->
+                    <xsl:variable name="valignment">
+                        <xsl:choose>
+                            <!-- parent row attribute first -->
+                            <xsl:when test="parent::row/@valign">
+                                <xsl:value-of select="parent::row/@valign" />
+                            </xsl:when>
+                            <!-- table attribute last -->
+                            <xsl:when test="ancestor::tabular/@valign">
+                                <xsl:value-of select="ancestor::tabular/@valign" />
+                            </xsl:when>
+                            <!-- We default to "middle" to be consistent with LaTeX -->
+                            <xsl:otherwise>
+                                <xsl:text>middle</xsl:text>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:variable>
+                    <xsl:variable name="top-thickness">
+                        <xsl:call-template name="thickness-specification">
+                            <xsl:with-param name="width" select="$top"/>
+                        </xsl:call-template>
+                        <xsl:text>pt</xsl:text>
+                    </xsl:variable>
+                    <xsl:variable name="left-thickness">
+                        <xsl:call-template name="thickness-specification">
+                            <xsl:with-param name="width" select="$left"/>
+                        </xsl:call-template>
+                        <xsl:text>pt</xsl:text>
+                    </xsl:variable>
+                    <xsl:variable name="right-thickness">
+                        <xsl:call-template name="thickness-specification">
+                            <xsl:with-param name="width" select="$right"/>
+                        </xsl:call-template>
+                        <xsl:text>pt</xsl:text>
+                    </xsl:variable>
+                    <xsl:variable name="bottom-thickness">
+                        <xsl:call-template name="thickness-specification">
+                            <xsl:with-param name="width" select="$bottom"/>
+                        </xsl:call-template>
+                        <xsl:text>pt</xsl:text>
+                    </xsl:variable>
+                    <style:style
+                        style:name="{$name}"
+                        style:family="table-cell"
+                        >
+                        <style:table-cell-properties
+                            fo:border-top="{$top-thickness} solid #000000"
+                            fo:border-left="{$left-thickness} solid #000000"
+                            fo:border-right="{$right-thickness} solid #000000"
+                            fo:border-bottom="{$bottom-thickness} solid #000000"
+                            style:vertical-align="{$valignment}"
+                        />
+                    </style:style>
+                </xsl:for-each>
+            </office:automatic-styles>
             <office:body>
                 <office:text>
                     <xsl:if test="title">
